@@ -1,0 +1,46 @@
+万里长征第一步,先写网络启动部分：
+
+include 部分文件：
+
+    文件名                     描述
+---------------------------------------------------------------
+    common.hrl              公共定义部分
+---------------------------------------------------------------
+
+game server 部分文件结构:
+
+    文件名                             描述                                                  otp行为
+--------------------------------------------------------------------------------------------------
+    server/server_app.erl          服务端的application                                     application
+    server/server_sup.erl          服务端的的supervisor                                     supervisor
+    server/server_mods.erl         用于启动游戏的各个模块
+    server/server_listener_sup.erl server_listener和server_acceptor_sup的supervisor        supervisor
+    server/server_listener.erl     负责监听的gen_server                                     gen_server
+    server/server_acceptor_sup.erl server_acceptor的supervisor                             supervisor
+    server/server_acceptor.erl     负责接收客户端连接的gen_server                             gen_server
+
+    server/client_sup.erl          packet_handler的监督树                                  supervisor
+    server/client_packet_handler.erl  just echo now (进程，但是没有otp行为)
+----------------------------------------------------------------------------------------------------
+
+
+进程结构（第一步，暂时只关心网络部分）:
+
+                                                 server_sup
+                                                    |
+                    ------------------------------------------------------------ 
+                    |                                   |                      |
+            server_listener_sup                     client_sup          其他的各种mod(线路，怪物etc.)
+                    |                                   |
+                ----------                  ------------------------
+                |        |                  |                      |
+    server_acceptor_sup server_listener   client_packet_handler   ...
+                |                           |(link)
+            ---------                     mod_player(未实现)
+            |       |
+   server_acceptor ...
+
+说明：
+根据大神们的指点，mod_player 会将<英雄远征>中的 mod_battle, mod_goods, mod_player, mod_mounts合为一个。
+
+
