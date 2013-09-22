@@ -1,0 +1,54 @@
+kernel部分主要负责连接数据库和初始化我们要用到的ets标：
+
+进程结构如下:
+                   
+                mod_kernel
+                    |
+                  mysql
+                    |
+            ----------------- (下面的连接进程为mysql的连接池)
+            |               |
+        mysql_conn        .....
+            |
+        mysql_recv
+
+下面对mysql模块进行说明：
+
+mysql模块的源码来自：https://github.com/dizzyd/erlang-mysql-drive
+结构如上图所示，比较有意思的是 mysql driver的连接池，此模块在初始化时代码如下：
+
+init_mysql() ->
+    mysql:start_link(?DB, ?DB_HOST, ?DB_PORT, ?DB_USER, 
+        ?DB_PASS, ?DB_NAME, fun(_,_,_,_) -> ok end, ?DB_ENCODE),
+    mysql:connect(?DB, ?DB_HOST, ?DB_PORT, ?DB_USER, ?DB_PASS, ?DB_NAME, ?DB_ENCODE, true),
+    ok.
+
+注意第一个参数为连接池ID.
+
+mysql:start_link 这个函数相当于创建一个连接池，并在这个连接池中默认创建一个mysql连接。
+mysql:connect 会在所创建的连接池里面再创建一个连接。
+
+mysql 的连接池由一个 gb_tree 来管理。
+里面的细节暂时还未研究，现在准备先跳过去。去看下面的东西。
+
+ets说明：
+init_ets() ->
+    ets:new(?ETS_ONLINE, [{keypos,#ets_online.id}, named_table, public, set]),
+    ok.
+
+{keypos,#ets_online.id} 将record的id部分作为Key.
+ets_online 现在结构如下：
+-record(ets_online, {
+        id = 0,
+        nickname = none,
+        pid = 0
+    }).
+打印 #ets_online.id, #ets_online.nickname, #ets_online.pid，结果分别为 2,3,4，很好奇1死哪去了？
+答案是，第一项是ets_online.
+
+M = #ets_online{}.
+io:format("~p~n", [M]).
+
+得到的结果是 {ets_online, 0, none, 0}
+
+接下来，为了操作方便，我又厚颜无耻的把原代码里面的db_sql.erl这个文件给copy了过来，其只是mysql的一个wrapper,不再多说。

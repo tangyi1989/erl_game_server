@@ -1,0 +1,15 @@
+资源链接:
+http://www.erlang.org/doc/design_principles/applications.html 
+http://cryolite.iteye.com/blog/1663436
+
+我觉得我应该使用工具来自动创建这些：
+下面似rebar的教程：
+
+1.下载和安装rebar
+git clone https://github.com/basho/rebar.git
+然后make即可
+cd /usr/bin
+然后进行一次 soft link，搞定。
+
+
+

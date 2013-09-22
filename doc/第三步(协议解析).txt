@@ -1,0 +1,47 @@
+通信协议准备使用 protobuf.
+
+下载并安装erlang_protobuffs：
+git clone git://github.com/basho/erlang_protobuffs.git
+cd erlang_protobuffs
+make all
+
+cd /usr/bin
+进行软连接
+编辑 escript/protoc-erl中
+
+修改
+%%! -sasl errlog_type error -boot start_sasl -noshell
+为
+%%! -pz 你的erlang_protobuffs路径/ebin -sasl errlog_type error -boot start_sasl -noshell
+然后就可以直接使用protoc-erl生成protobuff的erlang源码了。
+
+将 protobuffs/src/protobuff.erl 复制到 src/lib 中来。
+
+传输协议协议如下：
+
+    ---------------------
+    |   magic code:32   |
+    ---------------------
+    |     Command:32    |
+    ---------------------
+    |   Body length:32  |
+    ---------------------
+    |                   |
+    |    ProtoBuffers   |
+    |                   |
+    ---------------------
+
+现在进行两个内容的交互，登陆和攻击：
+定义 proto 文件如下：
+
+message Login {
+    required string name = 1;
+    required string password = 2;
+}
+
+message LoginResponse {
+    required int result = 1;
+    required string description = 2;
+}
+
+然后进行解析即可。

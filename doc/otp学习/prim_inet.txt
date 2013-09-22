@@ -1,0 +1,15 @@
+在本服务器中，并没有使用普通gen_tcp模块中的接口来控制套接字，而是直接使用了prim_inet中的接口。
+prim_inet为undocument的接口，所谓undocument接口，就是不向外暴漏的接口，官方可在新版本中在不经说明的情况狂下做变更。
+但是现在看起来这个接口被用的也不少了。
+
+下面这个连接也使用了这个接口：
+https://erlangcentral.org/wiki/index.php/Building_a_Non-blocking_TCP_server_using_OTP_principles
+
+里面有这么一段话：
+
+One of the shortcomings of the gen_tcp module is that it only exports interface to a blocking accept call. This leads most of developers working on an implementation of a TCP server build a custom process linked to a supervisor using proc_lib or come up with some other proprietary design.
+
+Examining prim_inet module reveals an interesting fact that the actual call to inet driver to accept a client socket is asynchronous. While this is a non-documented property, which means that the OTP team is free to change this implementation, we will exploit this functionality in the construction of our server. 
+
+我猜大概是这个意思：
+在使用gen_tcp:accept的时候，gen_tcp:accept会block掉整个accept进程，对这样的进程，管理起来不是很方便。

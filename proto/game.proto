@@ -1,0 +1,9 @@
+message Login {
+    required string name = 1;
+    required string password = 2;
+}
+
+message Response {
+    required int32 result = 1;
+    required string description = 2;
+}
