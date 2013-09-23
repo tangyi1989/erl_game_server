@@ -1,0 +1,109 @@
+生成协议设计
+
+--------------------------------------------------------
+
+我们会首先定义 proto 文件里面会定义我们所有的消息:
+
+%% login.proto
+
+message Login {
+    required string name = 1;
+    required string password = 2;
+}
+
+message LoginResponse {
+    required int32 result = 1;
+    required string description = 2;
+}
+
+message Player {
+    optional int32 id =1;
+    optional string name=2;
+}
+
+%% battle.proto
+
+message Attack {
+    required int32 skill_id = 1;
+    required int32 direct = 2; #攻击方向
+}
+
+最终 proto buffers 会给我们生成 login_pb.erl 和 battle_pb.erl
+以及 login_pb.hrl 和 battle_pb.hrl
+
+每个模块里面都会有 decode_XXX
+
+---------------------------------------------------------
+
+之后我们会定义协议解析相关的XML
+
+proto.xml
+
+<modules>
+    <package name="login" id="1">
+        <module name="auth" >
+            <method id="1101" action="login" message="login:Login"/>
+        </module>
+        <module name="player">
+            <method id="1201" action="add_player" message="login:Player"/>
+            <method id="1202" action="del_player" message="login:Player"/>
+        </module>
+    </package>
+
+    <package name="battle" id="2">
+        <module name="battle" >
+            <method id="2001" action="attack" message="battle:Attack"/>
+        </module>
+    </package>
+</modules>
+
+然后进行代码生成
+
+%% command.hrl 宏文件
+
+-define(MODULE_LOGIN, 1).
+-define(MODULE_BATTLE, 2).
+
+-define(LOGIN, 1101).
+-define(ADD_PLAYER, 1201).
+...
+
+%% routing.erl Decode 和 消息分发文件
+
+routing(Cmd, ProtoBuf, Client) ->
+    Record = decode_record(Cmd, ProtoBuf),
+    handle_command(Cmd, Record, Client).
+
+decord_record(?LOGIN, ProtoBuf) ->
+    login_pb:decode_login(Protobuf).
+
+decode_record(?ADD_PLAYER, ProtoBuf) ->
+    login_pb:decode_player(ProtoBuf).
+
+decode_record(?ATTACK, ProtoBuf) ->
+    battle_pb:decode_attack(ProtoBuf).
+
+handle_command(Cmd, Record, Client) ->
+    case round(Cmd/1000) of
+        ?MODULE_LOGIN ->
+            pp_login:handle(Cmd, Record, Client);
+        ?MODULE_BATTLE ->
+            pp_battle:handle(Cmd, Record, Client);
+        _Other ->
+            错误处理
+    end.
+
+%% pp_login.erl 处理消息的文件
+
+handle(?LOGIN, Login, Client)->
+    none.
+
+handle(?ADD_PLAYER, Player, Client)->
+    none.
+
+...
+
+%% pp_battle.erl 处理消息的文件
+
+handle(?ATTACK, Attack, Client) ->
+    none.
