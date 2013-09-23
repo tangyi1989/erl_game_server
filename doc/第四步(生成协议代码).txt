@@ -75,10 +75,10 @@ routing(Cmd, ProtoBuf, Client) ->
     handle_command(Cmd, Record, Client).
 
 decord_record(?LOGIN, ProtoBuf) ->
-    login_pb:decode_login(Protobuf).
+    login_pb:decode_login(Protobuf);
 
 decode_record(?ADD_PLAYER, ProtoBuf) ->
-    login_pb:decode_player(ProtoBuf).
+    login_pb:decode_player(ProtoBuf);
 
 decode_record(?ATTACK, ProtoBuf) ->
     battle_pb:decode_attack(ProtoBuf).
@@ -95,8 +95,10 @@ handle_command(Cmd, Record, Client) ->
 
 %% pp_login.erl 处理消息的文件
 
+-module(pp_login).
+
 handle(?LOGIN, Login, Client)->
-    none.
+    none;
 
 handle(?ADD_PLAYER, Player, Client)->
     none.
@@ -105,5 +107,11 @@ handle(?ADD_PLAYER, Player, Client)->
 
 %% pp_battle.erl 处理消息的文件
 
+-module(pp_battle).
+
 handle(?ATTACK, Attack, Client) ->
     none.
+
+-----------------------------------------------------------------------
+
+client_packet_handler 调用 routing:routing(Cmd, ProtoBuf, Client)即可。
