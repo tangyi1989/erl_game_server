@@ -1,0 +1,15 @@
+客户端使用pygame创建:
+最简单的方法,直接使用
+apt-get install python-pygame 
+进行安装。
+
+下面通过源码安装：
+sudo apt-get build-dep python-pygame
+sudo apt-get install libsdl1.2-dev
+sudo apt-get install libsmpeg-dev
+但是貌似还是会有一些包装不上，先跳过去。
+
+下面这个用于解决一个C moudle的编译问题:
+sudo apt-get install libv4l-dev
+cd /usr/include/linux
+sudo ln -s ../libv4l1-videodev.h videodev.h
