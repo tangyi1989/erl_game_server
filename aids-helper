@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+
+##-----------------------------------------------------------
+## 游戏服务器辅助脚本工具
+## jjchen.lian@gmail.com
+##-----------------------------------------------------------
+ulimit -c unlimited
+ulimit -SHn 51200
+
+##获取脚本执行目录
+here=`which "$0" 2>/dev/null || echo .`
+base="`dirname $here`"
+SHELL_DIR=`(cd "$base"; echo $PWD)`
+
+#echo $SHELL_DIR
+
+help ()
+{
+    echo "aids-helper 服务器辅助脚本使用说明"
+    echo "基本语法: aids-helper 命令模块 [option]"
+    echo "命令模块："
+    echo "help                  	显示当前帮助内容"
+    echo ""
+    exit 0
+}
+
+
+#有新增工程目录，往这里进行补充代码
+make_make()
+{
+    	Worker=`grep -c 'model name' /proc/cpuinfo`
+	echo "编译开始 ========================"
+	#切换到代码根目录
+	cd $SHELL_DIR
+	
+	#利用多核进行编译
+	cd $SHELL_DIR/app/game/gateway/
+	make -j $Worker
+}
+
+
+
+make_help()
+{
+	echo "aids-helper game make 使用说明"
+	echo "基本语法: aids-helper game make [命令]"
+	echo "命令为空则为直接编译项目"
+	echo "命令模块："
+	echo "help 		显示当前帮助内容"
+	echo "clean 	清理所有子项目编译内容"
+	echo "debug		以debug方式编译"
+	echo ""
+	exit 0
+}
+
+make_clean()
+{
+		
+	cd $SHELL_DIR/app/game/gateway/
+	make clean
+}
+
+
+sub_make ()
+{
+        ##继续检查是否还有参数，当前只识别几种参数 clean dialyzer debug
+        if [ $# -ne 0 ] ; then
+                MAKE_CODE=$1
+                case $MAKE_CODE in
+                        clean) make_clean ;;
+                        debug) make_debug ;;
+                        #gateway) make_gateway ;可以针对子目录进行编译
+                        *) make_help ;;
+                esac
+        else
+                make_make
+        fi
+}
+
+
+if [ $# -eq 0 ]; then
+	help
+fi
+
+
+game_rebuild()
+{
+	make_clean
+	make_make
+}
+
+game_clean()
+{
+	make_clean
+}
+
+game_help() 
+{
+	echo "mgectl game 使用说明"
+	echo "基本语法: mgectl game 命令 [option]"
+	echo "命令模块："
+	echo "help 		显示当前帮助内容"
+	echo "make 		同make语法"
+	echo "rebuild 	重新编译，相当于 make clean && make"
+	echo ""
+	exit 0
+}
+
+parse_game()
+{
+	SUB_TARGET=$1
+	shift
+	case $SUB_TARGET in
+		help) game_help ;;
+		make) sub_make $* ;;
+		make_erl) game_make_erl ;;
+		rebuild) game_rebuild ;;
+		*) game_help ;;
+	esac
+}
+
+
+## 管理功能
+mananger() 
+{
+	COMMAND=$1
+	shift
+	case $COMMAND in
+		#以后服务器的热更新
+		#reload_config) reload_config $*;;
+		#hot_update) hot_update $*;;
+		#mnesia_update) mnesia_update $*;;
+		*) help ;;
+	esac
+}
+
+## 获取子shell命令
+TARGET=$1
+shift
+case $TARGET in
+	help) help ;;
+	web) shift ;;
+	game) parse_game $* ;;
+	make) sub_make $* ;;
+	make_erl) game_make_erl $* ;;
+	rebuild) game_rebuild $* ;;
+	clean) game_clean $* ;;
+	manager) mananger $*;;
+	*) help ;;
+esac
