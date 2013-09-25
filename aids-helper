@@ -140,8 +140,7 @@ start_app()
 {
 	NODE=$1
 	SLAVE_NUM=$2
-	COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM; exit $?`
-	echo $COMMAND
+	COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
 	if [ $? -eq 0 ] ; then
 		bash -c "$COMMAND"
 	else
