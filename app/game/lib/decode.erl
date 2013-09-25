@@ -1,9 +1,6 @@
 %% This is a auto generated file, please do not modify it.
-<<<<<<< HEAD
-=======
--include("proto.hrl").
->>>>>>> bbbe6fcecfec2b526989d64ad8468c255104dd22
 
+-include("proto.hrl").
 -export([decode_record/3]).
 
 decode_record(?MODULE_LOGIN, ?METHOD_LOGIN, ProtoBuf) -> login_pb:decode_login(ProtoBuf);
