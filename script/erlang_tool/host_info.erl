@@ -48,7 +48,7 @@ make_start_command(get_start_command, manager, MasterHost, _SalveNum, CodePath) 
 	Command = lists:flatten(lists:concat(
 					["/usr/local/bin/erl -name manager@", MasterHost, " ", CodePath, " -detached -setcookie ",
 					 Cookie, " -noinput  -env ERL_MAX_ETS_TABLES 500000  +P 250000 +K true +h ",
-					 "10240 -smp disable -master_node manager@", MasterHost])),
+					 "10240 -smp disable -s manager -master_node manager@", MasterHost])),
 	Command.
 
 get_cookie() ->
@@ -80,7 +80,7 @@ get_ebin_dir(RootDIR) ->
       end, [RootDIR | FoldList2], FoldList2).
 
 get_code_path() ->
-	PathList = get_ebin_dir("/data/erl_game_server" ++ "/ebin"),
+	PathList = get_ebin_dir("/data/erl_game_server/ebin"),
     lists:foldl(
       fun(P, Acc) ->
               [" -pa " ++ P | Acc]
