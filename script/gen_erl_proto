@@ -1,0 +1,233 @@
+#!/usr/bin/env python
+# *_* coding=utf8 *_*
+
+"""
+根据proto和server_map.xml自动生成Protobuf协议和erlang的处理代码的模板
+作者：唐万万
+email : tang_yi_1989@qq.com
+日期：2013-09-25
+"""
+
+import os
+from xml.etree import ElementTree as ET
+
+TOP_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.join(TOP_DIR, '../')
+
+ERL_PROTO_PATH = os.path.join(TOP_DIR, 'erlang_protobuffs')
+COMPILER_EBIN_PATH = os.path.join(ERL_PROTO_PATH, 'ebin')
+
+# 协议文件
+PROTO_PATH = os.path.join(ROOT_DIR, 'proto')
+PROTO_FILES = ['game.proto']
+SERVER_MAP_PATH = os.path.join(PROTO_PATH, 'server_map.xml')
+
+# 生成google protocol buffer的路径
+OUTPUT_PROTO_SRC_PATH = './erl'
+OUTPUT_PROTO_INCLUDE_PATH = './include'
+
+
+# 下面的五个结构构成一个树形结构用于 server_map.xml 的解析
+class ProtocolElement(object):
+
+    """ 总觉得他们如果有一个共同的基类的话，会有点用，但是现在还没想好用来做什么 """
+
+    pass
+
+
+class Protocol(ProtocolElement):
+
+    """ 协议:server_map的根节点，包括一组包 """
+
+    def __init__(self, packages=[]):
+        self.packages = packages
+
+    def add_package(self, package):
+        self.packages.append(package)
+
+    @property
+    def modules(self):
+        all_modules = []
+        for pkg in self.packages:
+            all_modules.extend(pkg.modules)
+
+        return all_modules
+
+    @property
+    def methods(self):
+        all_methods = []
+        for module in self.modules:
+            all_methods.extend(module.methods)
+        return all_methods
+
+
+class Package(ProtocolElement):
+
+    """ 包:代表对一组协议(一个)的解析，包含若干模块 """
+
+    def __init__(self, name, protocol, proto_file=None):
+        """
+        PARAMETERS:
+            proto:为google protobuf文件的名称
+        """
+        self.name = name
+        self.modules = []
+        self.protocol = protocol
+
+        if proto_file is None:
+            self.proto_file = '%s.proto' % self.name
+        else:
+            self.proto_file = proto_file
+
+    def add_module(self, module):
+        self.modules.append(module)
+
+    @property
+    def proto_prefix(self):
+        end_pos = self.proto_file.find('.proto')
+        return self.proto_file[:end_pos] if end_pos > -1 else self.proto_file
+
+
+class Module(ProtocolElement):
+
+    """ 模块:代表对一组功能的封装，包括洗衣具体的调用方法 """
+
+    def __init__(self, name, id, package):
+        self.name = name
+        self.id = id
+        self.methods = []
+        self.package = package
+
+    def add_method(self, method):
+        self.methods.append(method)
+
+    @property
+    def macro(self):
+        return 'MODULE_%s' % self.name.upper()
+
+    def render_define_macro(self):
+        return "-define(%s, %s)." % (self.macro, self.id)
+
+
+class Method(ProtocolElement):
+
+    """ 具体的调用方法 """
+
+    def __init__(self, name, id, module, message=None):
+        self.name = name
+        self.id = id
+        self.module = module
+        if message is None:
+            self.message = name
+        else:
+            self.message = message
+
+    @property
+    def macro(self):
+        return 'METHOD_%s' % self.name.upper()
+
+    def render_define_macro(self):
+        return "-define(%s, %s)." % (self.macro, self.id)
+
+    def render_decode_record(self):
+        erl_moudle = '%s_pb' % self.module.package.proto_prefix
+        decode_mothod = 'decode_%s' % self.name.lower()
+        return 'decode_record(?%s, ?%s, ProtoBuf) -> %s:%s(ProtoBuf)' % (
+            self.module.macro, self.macro, erl_moudle, decode_mothod)
+
+
+# 生成google protocol buffers的erlang代码。
+def compile_proto(proto_file, import_dir=None, output_src_dir=None,
+                  output_include_dir=None):
+    """ 利用erlang_protobuffs这个工具对proto buffers进行编译。"""
+    options = []
+    if import_dir is not None:
+        options.append('{imports_dir,"%s"}' % import_dir)
+    if output_include_dir is not None:
+        options.append('{output_include_dir,"%s"}' % output_include_dir)
+    if output_src_dir is not None:
+        options.append('{output_src_dir,"%s"}' % output_src_dir)
+
+    script = """'protobuffs_compile:generate_source("%s", [%s]).'""" % (
+        proto_file, ','.join(options))
+
+    command = ['erl']
+    command.extend(['-noshell'])
+    command.extend(['-pz', COMPILER_EBIN_PATH])
+    command.extend(['-eval', script])
+
+    return ' '.join(command)
+
+
+def gen_protobuf_files():
+    for f in PROTO_FILES:
+        proto_file = os.path.join(PROTO_PATH, f)
+        print compile_proto(proto_file, PROTO_PATH, OUTPUT_PROTO_SRC_PATH,
+                            OUTPUT_PROTO_INCLUDE_PATH)
+
+
+def parse_server_map(config_path):
+    """ 解析server_map.xml配置文件，生成Protocol实例。 """
+    protocol = Protocol()
+
+    tree = ET.parse(config_path)
+    proto_root = tree.getroot()
+    assert proto_root.tag == 'proto'
+
+    # 解析package
+    for pkg_elem in proto_root.findall('package'):
+        pkg_name = pkg_elem.get('name')
+        package = Package(pkg_name, protocol)
+
+        # 解析module
+        for module_elem in pkg_elem.findall('module'):
+            module_id = module_elem.get('id')
+            module_name = module_elem.get('name')
+            module = Module(module_name, module_id, package)
+
+            # 解析method
+            for method_elem in module_elem.findall('method'):
+                method_name = method_elem.get('name')
+                method_id = method_elem.get('id')
+                method = Method(method_name, method_id, module)
+                module.add_method(method)
+
+            package.add_module(module)
+
+        protocol.add_package(package)
+
+    return protocol
+
+
+def render_proto_define_text(protocol):
+    """ 生成协议的erlang定义文件 """
+    notes = '%% This is a auto generated file, please do not modify it.'
+    lines = [notes, '']
+    for moudle in protocol.modules:
+        lines.append(moudle.render_define_macro())
+    for method in protocol.methods:
+        lines.append(method.render_define_macro())
+    return '\n'.join(lines)
+
+
+def render_decode_text(protocol):
+    notes = '%% This is a auto generated file, please do not modify it.'
+    lines = [notes, '', '-export([decode_record/3]).', '']
+
+    method_lines = []
+    methods = protocol.methods
+    methods.reverse()
+    method_lines.append('%s.' % methods[0].render_decode_record())
+    for method in methods[1:]:
+        method_lines.append('%s;' % method.render_decode_record())
+    method_lines.reverse()
+
+    lines.extend(method_lines)
+    return '\n'.join(lines)
+
+
+if __name__ == '__main__':
+    # gen_protobuf_files()
+    protocol = parse_server_map(SERVER_MAP_PATH)
+    print render_proto_define_text(protocol)
+    print render_decode_text(protocol)
