@@ -1,4 +1,5 @@
 %% This is a auto generated file, please do not modify it.
+-include("proto.hrl").
 
 -export([decode_record/3]).
 

@@ -220,7 +220,7 @@ def render_proto_define_text(protocol):
 
 def render_decode_text(protocol):
     notes = '%% This is a auto generated file, please do not modify it.'
-    lines = [notes, '', '-export([decode_record/3]).', '']
+    lines = [notes, '-include("proto.hrl").', '', '-export([decode_record/3]).', '']
 
     method_lines = []
     methods = protocol.methods
