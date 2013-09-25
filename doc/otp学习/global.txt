@@ -1,0 +1,189 @@
+erlang global模块：
+手册 http://erlang.org/doc/man/global.html
+
+global 模块的三个作用：
+    registration of global names; 全局名字的注册。
+    global locks; 全局锁。
+    maintenance of the fully connected network. 网络维护？
+
+global这个模块为一个gen_server行为。
+这个模块进程会在erlang初始化的时候进行创建，可以通过 erlang:registered().
+进行查看：
+
+[init,erl_prim_loader,rex,inet_db,kernel_sup,
+ kernel_safe_sup,global_name_server,code_server,user,
+ file_server_2,user_drv,standard_error,
+ application_controller,standard_error_sup,error_logger,
+ global_group]
+
+其中的global_name_server即global模块创建的server.
+此server在启动时会创建一个辅助进程：
+
+start_the_registrar() ->
+    spawn_link(fun() -> loop_the_registrar() end).
+
+global 模块接口 register_name 用于在网络上注册一个命名的进程。
+
+register_name(Name, Pid) when is_pid(Pid) ->
+    register_name(Name, Pid, fun random_exit_name/3).
+
+register_name(Name, Pid, Method) when is_pid(Pid) ->
+    Fun = fun(Nodes) ->
+        %% check_dupname会在命名ets表中查看是否已经存在此命名进程。
+        case (where(Name) =:= undefined) andalso check_dupname(Name, Pid) of
+            true ->
+                gen_server:multi_call(Nodes,
+                                      global_name_server,
+                                      {register, Name, Pid, Method}),
+                yes;
+            _ ->
+                no
+        end
+    end,
+    ?trace({register_name, self(), Name, Pid, Method}),
+    gen_server:call(global_name_server, {registrar, Fun}, infinity).
+
+handle_call({registrar, Fun}, From, S) ->
+    S#state.the_registrar ! {trans_all_known, Fun, From},
+    {noreply, S};
+
+handle_call({registrar, Fun}, From, S) ->
+    S#state.the_registrar ! {trans_all_known, Fun, From},
+    {noreply, S};
+
+loop_the_registrar() ->
+    receive 
+        {trans_all_known, Fun, From} ->
+            ?trace({loop_the_registrar, self(), Fun, From}),
+            gen_server:reply(From, trans_all_known(Fun));
+    Other ->
+            unexpected_message(Other, register)
+    end,
+    loop_the_registrar().
+
+%% Similar to trans(Id, Fun), but always uses global's own lock
+%% on all nodes known to global, making sure that no new nodes have
+%% become known while we got the list of known nodes.
+trans_all_known(Fun) ->
+    Id = {?GLOBAL_RID, self()},
+    Nodes = set_lock_known(Id, 0),
+    try
+        Fun(Nodes)
+    after
+        delete_global_lock(Id, Nodes)
+    end.
+
+%%-----------------------------------------------------------------
+%% Connection algorithm
+%% ====================
+%% This algorithm solves the problem with partitioned nets as well.
+%%
+%% The main idea in the algorithm is that when two nodes connect, they
+%% try to set a lock in their own partition (i.e. all nodes already
+%% known to them; partitions are not necessarily disjoint). When the
+%% lock is set in each partition, these two nodes send each other a
+%% list with all registered names in resp partition (*). If no conflict
+%% is found, the name tables are just updated. If a conflict is found,
+%% a resolve function is called once for each conflict. The result of
+%% the resolving is sent to the other node. When the names are
+%% exchanged, all other nodes in each partition are informed of the
+%% other nodes, and they ping each other to form a fully connected
+%% net.
+%%
+%% A few remarks:
+%% 
+%% (*) When this information is being exchanged, no one is allowed to
+%%     change the global register table. All calls to register etc are
+%%     protected by a lock. If a registered process dies during this
+%%     phase the name is unregistered on the local node immediately,
+%%     but the unregistration on other nodes will take place when the
+%%     deleter manages to acquire the lock. This is necessary to
+%%     prevent names from spreading to nodes where they cannot be
+%%     deleted.
+%%
+%% - It is assumed that nodeups and nodedowns arrive in an orderly
+%%   fashion: for every node, nodeup is followed by nodedown, and vice
+%%   versa. "Double" nodeups and nodedowns must never occur. It is
+%%   the responsibility of net_kernel to assure this.
+%%
+%% - There is always a delay between the termination of a registered
+%%   process and the removal of the name from Global's tables. This
+%%   delay can sometimes be quite substantial. Global guarantees that
+%%   the name will eventually be removed, but there is no
+%%   synchronization between nodes; the name can be removed from some
+%%   node(s) long before it is removed from other nodes. Using
+%%   safe_whereis_name is no cure.
+%%
+%% - Global cannot handle problems with the distribution very well.
+%%   Depending on the value of the kernel variable 'net_ticktime' long
+%%   delays may occur. This does not affect the handling of locks but
+%%   will block name registration.
+%% 
+%% - Old synch session messages may linger on in the message queue of
+%%   global_name_server after the sending node has died. The tags of
+%%   such messages do not match the current tag (if there is one),
+%%   which makes it possible to discard those messages and cancel the
+%%   corresponding lock.
+%%
+%% Suppose nodes A and B connect, and C is connected to A.
+%% Here's the algorithm's flow:
+%%
+%% Node A
+%% ------
+%% << {nodeup, B}
+%%   TheLocker ! {nodeup, ..., Node, ...} (there is one locker per node)
+%% B ! {init_connect, ..., {..., TheLockerAtA, ...}}
+%% << {init_connect, TheLockerAtB}
+%%   [The lockers try to set the lock]
+%% << {lock_is_set, B, ...}
+%%   [Now, lock is set in both partitions]
+%% B ! {exchange, A, Names, ...}
+%% << {exchange, B, Names, ...}
+%%   [solve conflict]
+%% B ! {resolved, A, ResolvedA, KnownAtA, ...}
+%% << {resolved, B, ResolvedB, KnownAtB, ...}
+%% C ! {new_nodes, ResolvedAandB, [B]}
+%%
+%% Node C
+%% ------
+%% << {new_nodes, ResolvedOps, NewNodes}
+%%   [insert Ops]
+%% ping(NewNodes)
+%% << {nodeup, B}
+%% <ignore this one>
+%%
+%% Several things can disturb this picture.
+%%
+%% First, the init_connect message may arrive _before_ the nodeup
+%% message due to delay in net_kernel. We handle this by keeping track
+%% of these messages in the pre_connect variable in our state.
+%%
+%% Of course we must handle that some node goes down during the
+%% connection.
+%%
+%%-----------------------------------------------------------------
+%% Messages in the protocol
+%% ========================
+%% 1. Between global_name_servers on connecting nodes
+%%    {init_connect, Vsn, Node, InitMsg}
+%%         InitMsg = {locker, _Unused, HisKnown, HisTheLocker}
+%%    {exchange, Node, ListOfNames, _ListOfNamesExt, Tag}
+%%    {resolved, Node, HisOps, HisKnown, _Unused, ListOfNamesExt, Tag}
+%%         HisKnown = list of known nodes in Node's partition
+%% 2. Between lockers on connecting nodes
+%%    {his_locker, Pid} (from our global)
+%%    {lock, Bool} loop until both lockers have lock = true,
+%%          then send to global_name_server {lock_is_set, Node, Tag}
+%% 3. Connecting node's global_name_server informs other nodes in the same 
+%%    partition about hitherto unknown nodes in the other partition
+%%    {new_nodes, Node, Ops, ListOfNamesExt, NewNodes, ExtraInfo}
+%% 4. Between global_name_server and resolver
+%%    {resolve, NameList, Node} to resolver
+%%    {exchange_ops, Node, Tag, Ops, Resolved} from resolver
+%% 5. sync protocol, between global_name_servers in different partitions
+%%    {in_sync, Node, IsKnown}
+%%          sent by each node to all new nodes (Node becomes known to them)
+%%-----------------------------------------------------------------
+
+大概如此，不继续深究了。
+ 

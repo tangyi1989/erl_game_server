@@ -1,0 +1,14 @@
+<proto>
+  <package name="login"> <!--这个实际没什么用处，就是表示login包名而已-->
+    <module name="LOGIN" id="1"> <!--模块名对应的id，会生成#define(LOGIN,1)这样的宏-->
+      <method name="LOGIN" id="101"/> <!--对应的方法id,会生成#define(LOGIN_PHP,101)这样的宏-->
+    </module>
+    <module name="ROLE" id="2"> <!--模块名对应的id，会生成#define(ROLE,2)这样的宏-->
+      <method name="ROLE_ADD" id="201"/>
+      <method name="ROLE_CHOSE" id="202"/>
+      <method name="ROLE_DEL" id="203"/>
+      <method name="ROLE_LIST" id="204"/>
+      <method name="ROLE_ENTER" id="205"/>
+    </module>
+  </package>
+</proto>

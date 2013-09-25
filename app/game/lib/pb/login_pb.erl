@@ -1,9 +1,9 @@
--file("src/example_pb.erl", 1).
+-file("src/login_pb.erl", 1).
 
--module(example_pb).
+-module(login_pb).
 
--export([encode_login_reponse/1, decode_login_reponse/1,
-	 delimited_decode_login_reponse/1, encode_login/1,
+-export([encode_response/1, decode_response/1,
+	 delimited_decode_response/1, encode_login/1,
 	 decode_login/1, delimited_decode_login/1]).
 
 -export([has_extension/2, extension_size/1,
@@ -13,7 +13,7 @@
 
 -export([encode/1, decode/2, delimited_decode/2]).
 
--record(login_reponse, {result, description}).
+-record(response, {result, description}).
 
 -record(login, {name, password}).
 
@@ -22,11 +22,11 @@ encode(Records) when is_list(Records) ->
     delimited_encode(Records);
 encode(Record) -> encode(element(1, Record), Record).
 
-encode_login_reponse(Records) when is_list(Records) ->
+encode_response(Records) when is_list(Records) ->
     delimited_encode(Records);
-encode_login_reponse(Record)
-    when is_record(Record, login_reponse) ->
-    encode(login_reponse, Record).
+encode_response(Record)
+    when is_record(Record, response) ->
+    encode(response, Record).
 
 encode_login(Records) when is_list(Records) ->
     delimited_encode(Records);
@@ -37,11 +37,10 @@ encode(login, Records) when is_list(Records) ->
     delimited_encode(Records);
 encode(login, Record) ->
     [iolist(login, Record) | encode_extensions(Record)];
-encode(login_reponse, Records) when is_list(Records) ->
+encode(response, Records) when is_list(Records) ->
     delimited_encode(Records);
-encode(login_reponse, Record) ->
-    [iolist(login_reponse, Record)
-     | encode_extensions(Record)].
+encode(response, Record) ->
+    [iolist(response, Record) | encode_extensions(Record)].
 
 encode_extensions(_) -> [].
 
@@ -58,13 +57,12 @@ iolist(login, Record) ->
 	  with_default(Record#login.name, none), string, []),
      pack(2, required,
 	  with_default(Record#login.password, none), string, [])];
-iolist(login_reponse, Record) ->
+iolist(response, Record) ->
     [pack(1, required,
-	  with_default(Record#login_reponse.result, none), int32,
-	  []),
+	  with_default(Record#response.result, none), int32, []),
      pack(2, required,
-	  with_default(Record#login_reponse.description, none),
-	  string, [])].
+	  with_default(Record#response.description, none), string,
+	  [])].
 
 with_default(Default, Default) -> undefined;
 with_default(Val, _) -> Val.
@@ -109,8 +107,8 @@ enum_to_int(pikachu, value) -> 1.
 
 int_to_enum(_, Val) -> Val.
 
-decode_login_reponse(Bytes) when is_binary(Bytes) ->
-    decode(login_reponse, Bytes).
+decode_response(Bytes) when is_binary(Bytes) ->
+    decode(response, Bytes).
 
 decode_login(Bytes) when is_binary(Bytes) ->
     decode(login, Bytes).
@@ -118,8 +116,8 @@ decode_login(Bytes) when is_binary(Bytes) ->
 delimited_decode_login(Bytes) ->
     delimited_decode(login, Bytes).
 
-delimited_decode_login_reponse(Bytes) ->
-    delimited_decode(login_reponse, Bytes).
+delimited_decode_response(Bytes) ->
+    delimited_decode(response, Bytes).
 
 delimited_decode(Type, Bytes) when is_binary(Bytes) ->
     delimited_decode(Type, Bytes, []).
@@ -145,12 +143,12 @@ decode(login, Bytes) when is_binary(Bytes) ->
     Defaults = [],
     Decoded = decode(Bytes, Types, Defaults),
     to_record(login, Decoded);
-decode(login_reponse, Bytes) when is_binary(Bytes) ->
+decode(response, Bytes) when is_binary(Bytes) ->
     Types = [{2, description, string, []},
 	     {1, result, int32, []}],
     Defaults = [],
     Decoded = decode(Bytes, Types, Defaults),
-    to_record(login_reponse, Decoded).
+    to_record(response, Decoded).
 
 decode(<<>>, Types, Acc) ->
     reverse_repeated_fields(Acc, Types);
@@ -233,14 +231,14 @@ to_record(login, DecodedTuples) ->
 			  end,
 			  #login{}, DecodedTuples),
     Record1;
-to_record(login_reponse, DecodedTuples) ->
+to_record(response, DecodedTuples) ->
     Record1 = lists:foldr(fun ({_FNum, Name, Val},
 			       Record) ->
 				  set_record_field(record_info(fields,
-							       login_reponse),
+							       response),
 						   Record, Name, Val)
 			  end,
-			  #login_reponse{}, DecodedTuples),
+			  #response{}, DecodedTuples),
     Record1.
 
 decode_extensions(Record) -> Record.
