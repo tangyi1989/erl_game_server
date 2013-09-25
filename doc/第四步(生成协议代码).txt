@@ -57,6 +57,8 @@ proto.xml
     </package>
 </modules>
 
+
+
 然后进行代码生成
 
 %% command.hrl 宏文件

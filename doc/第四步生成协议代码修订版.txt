@@ -1,0 +1,90 @@
+修订版:
+<modules>
+  <package name="login"> <!--这个实际没什么用处，就是表示login包名而已-->
+    <module name="LOGIN" id="1"> <!--模块名对应的id，会生成#define(LOGIN,1)这样的宏-->
+      <method name="LOGIN_FLASH" id="101"/> <!--对应的方法id,会生成#define(LOGIN_PHP,101)这样的宏-->
+      <method name="LOGIN_PHP" id="102"/>
+    </module>
+    <module name="ROLE" id="2"> <!--模块名对应的id，会生成#define(ROLE,2)这样的宏-->
+      <method name="ROLE_ADD" id="201"/>
+      <method name="ROLE_CHOSE" id="202"/>
+      <method name="ROLE_DEL" id="203"/>
+      <method name="ROLE_LIST" id="204"/>
+      <method name="ROLE_ENTER" id="205"/>
+    </module>
+  </package>
+</modules>
+然后生成宏文件
+-define(LOGIN,1).
+-define(ROLE,2).
+-define(LOGIN_FALSH,101).
+.....
+
+
+.proto文件对应内容
+login_flash的消息协议体
+message login_flash {
+    required string name = 1;
+    required string password = 2;
+}
+
+经过googlebuf将会生成 login_flash_pb.erl文件，并且对用有decoed_login_flash方法，那么经过代码生成decode_record方法的erl文件
+类似:
+decode_record(?LOGIN,?LOGIN_FLASH,LoginFlashRecord) ->
+        login_flash_pb:decode_login_flash(LoginFlashRecord); 这里的login_flash,也即是xxx_xxxx_pb:decoed_xxx_xxxx，
+是根据xml文件中里面的<method name="LOGIN_FLASH" id="101"/>来生成的，也即是将name="LOGIN_FLASH"中的LOGIN_FALSH这个转成小写，然后跟pb和decoed
+拼接起来，然后生成对应的代码
+
+
+另外取消这样的匹配代码模式
+handle_command(Cmd, Record, Client) ->
+    case round(Cmd/1000) of
+        ?MODULE_LOGIN ->
+            pp_login:handle(Cmd, Record, Client);
+        ?MODULE_BATTLE ->
+            pp_battle:handle(Cmd, Record, Client);
+        _Other ->
+            错误处理
+    end.
+因为这样会导致该方法比较多比较管理，我们将这些方法分散出去。
+
+比如在网关进程处理完协议后，通过 玩家进程ID ! {?LOGIN,?LOGIN_FLASH,LoginFlashRecord}这样的方式路由给玩家进程
+然后玩家进程是一个gen_server,然后在handle_info(Info)这样匹配到消息，类似下面代码
+
+handle_info(Info, State) ->
+    try
+        do_handle_info(Info, State)
+    catch
+        T:R ->
+            case Info of
+                {_Unique, _Module, _Method, DataRecord, RoleID, _Pid, _Line}->
+                    ?ERROR_MSG("module: ~w, line: ~w, Info:~w, type: ~w, reason: ~w,DataRecord=~w,RoleID=~w,stactraceo: ~w",
+                               [?MODULE, ?LINE, Info, T, R,DataRecord,RoleID,erlang:get_stacktrace()]);
+                _ ->
+                    ?ERROR_MSG("module: ~w, line: ~w, Info:~w, type: ~w, reason: ~w,stactraceo: ~w",
+                               [?MODULE, ?LINE, Info, T, R,erlang:get_stacktrace()])
+            end
+    end,
+    {noreply, State}.
+
+%% 调用handle/2 的缩写
+-define(MODULE_HANDLE_TWO(Module,HandleModule), //Module=?LOGIN,HandleModule=mod_login,mod_login也就是mod_login.erl业务模块
+    do_handle_info({Unique, Module, Method, DataIn, RoleID, PID, Line}, State) ->
+    HandleModule:handle({Unique, Module, Method, DataIn, RoleID, PID, Line}, State)).
+
+接着我们以后代码只要这样子写就了
+?MODULE_HANDLE_TWO(?LOGIN,mod_login);
+
+
+剩下我们的mod_login.erl的形式就是这样的了
+hanle({Unique, Module, Method, DataIn, RoleID, PID, Line}, State) ->
+        .....
+
+
+这样更能体现出网关的路由功能，更能体现出各自的功能，网关只做处理连接，把协议路由出去，而不做分析要路由给谁，反正我把消息路由出去了，
+至于谁能匹配上，那是其他人的事情了，而我们把消息的匹配放到想要这条消息的地方去做，各司其职
+
+有点类似路由器的想法，比如A机给B机发送一条消息，那么A机的消息会给在这个局域网内的所有机器，那么至于其他机器能否接收这个消息，那就是你
+自己本机要做的事情了。
+
+请指正且继续优化

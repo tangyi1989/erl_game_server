@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#！/usr/bin/env bash
 
 ##-----------------------------------------------------------
 ## 游戏服务器辅助脚本工具
 ## jjchen.lian@gmail.com
 ##-----------------------------------------------------------
-ulimit -c unlimited
-ulimit -SHn 51200
+#ulimit -c unlimited
+#ulimit -SHn 51200
 
 ##获取脚本执行目录
 here=`which "$0" 2>/dev/null || echo .`
@@ -134,17 +134,49 @@ mananger()
 	esac
 }
 
+##启动指定的节点
+## $?表示上个方法的返回值
+start_app()
+{
+	NODE=$1
+	SLAVE_NUM=$2
+	COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM; exit $?`
+	echo $COMMAND
+	if [ $? -eq 0 ] ; then
+		bash -c "$COMMAND"
+	else
+		echo $COMMAND;
+		exit
+	fi
+}
+##启动游戏
+## $#表示传入方法中的参数的个数
+start_game()
+{
+	if [ $# -ne 0 ] ; then
+		TARGET_NODE=$1
+		SLAVE_NUM=$2
+		##有带参数那么就启动参数中指定的节点
+		start_app $TARGET_NODE $SLAVE_NUM
+	else
+		##缺省状态下启动manager节点
+		start_app manager 1
+	fi
+		
+}
+
 ## 获取子shell命令
 TARGET=$1
 shift
 case $TARGET in
 	help) help ;;
-	web) shift ;;
+	
 	game) parse_game $* ;;
 	make) sub_make $* ;;
 	make_erl) game_make_erl $* ;;
 	rebuild) game_rebuild $* ;;
 	clean) game_clean $* ;;
-	manager) mananger $*;;
+	
+	start) start_game $* ;;
 	*) help ;;
 esac
