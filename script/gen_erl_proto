@@ -23,10 +23,10 @@ PROTO_FILES = ['login.proto']
 SERVER_MAP_PATH = os.path.join(PROTO_PATH, 'server_map.xml')
 
 # 生成google protocol buffer的路径
-OUTPUT_PROTO_SRC_PATH = os.path.join(ROOT_DIR, 'app/game/lib/pb')
+OUTPUT_PROTO_SRC_PATH = os.path.join(ROOT_DIR, 'proto/pb')
 OUTPUT_PROTO_INCLUDE_PATH = os.path.join(ROOT_DIR, 'hrl')
 # 生成的解码文件的路径
-DECODE_PROTO_PATH = os.path.join(ROOT_DIR, 'app/game/lib/decode.erl')
+DECODE_PROTO_PATH = os.path.join(ROOT_DIR, 'app/game/gateway/src/decode.erl')
 PROTO_MACRO_PATH = os.path.join(ROOT_DIR, 'hrl/proto.hrl')
 
 
