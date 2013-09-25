@@ -19,12 +19,15 @@ COMPILER_EBIN_PATH = os.path.join(ERL_PROTO_PATH, 'ebin')
 
 # 协议文件
 PROTO_PATH = os.path.join(ROOT_DIR, 'proto')
-PROTO_FILES = ['game.proto']
+PROTO_FILES = ['login.proto']
 SERVER_MAP_PATH = os.path.join(PROTO_PATH, 'server_map.xml')
 
 # 生成google protocol buffer的路径
-OUTPUT_PROTO_SRC_PATH = './erl'
-OUTPUT_PROTO_INCLUDE_PATH = './include'
+OUTPUT_PROTO_SRC_PATH = os.path.join(ROOT_DIR, 'app/game/lib/pb')
+OUTPUT_PROTO_INCLUDE_PATH = os.path.join(ROOT_DIR, 'hrl')
+# 生成的解码文件的路径
+DECODE_PROTO_PATH = os.path.join(ROOT_DIR, 'app/game/lib/decode.erl')
+PROTO_MACRO_PATH = os.path.join(ROOT_DIR, 'hrl/proto.hrl')
 
 
 # 下面的五个结构构成一个树形结构用于 server_map.xml 的解析
@@ -136,7 +139,6 @@ class Method(ProtocolElement):
             self.module.macro, self.macro, erl_moudle, decode_mothod)
 
 
-# 生成google protocol buffers的erlang代码。
 def compile_proto(proto_file, import_dir=None, output_src_dir=None,
                   output_include_dir=None):
     """ 利用erlang_protobuffs这个工具对proto buffers进行编译。"""
@@ -151,19 +153,20 @@ def compile_proto(proto_file, import_dir=None, output_src_dir=None,
     script = """'protobuffs_compile:generate_source("%s", [%s]).'""" % (
         proto_file, ','.join(options))
 
-    command = ['erl']
-    command.extend(['-noshell'])
+    command = ['/usr/local/bin/erl']
+    command.extend(['-noshell', '-no-input'])
     command.extend(['-pz', COMPILER_EBIN_PATH])
     command.extend(['-eval', script])
+    command.extend(['-s', 'init', 'stop'])
 
-    return ' '.join(command)
+    os.system(' '.join(command))
 
 
 def gen_protobuf_files():
     for f in PROTO_FILES:
         proto_file = os.path.join(PROTO_PATH, f)
-        print compile_proto(proto_file, PROTO_PATH, OUTPUT_PROTO_SRC_PATH,
-                            OUTPUT_PROTO_INCLUDE_PATH)
+        compile_proto(proto_file, PROTO_PATH, OUTPUT_PROTO_SRC_PATH,
+                      OUTPUT_PROTO_INCLUDE_PATH)
 
 
 def parse_server_map(config_path):
@@ -199,6 +202,11 @@ def parse_server_map(config_path):
     return protocol
 
 
+def write_file(content, path):
+    with open(path, 'w') as f:
+        f.write(content)
+
+
 def render_proto_define_text(protocol):
     """ 生成协议的erlang定义文件 """
     notes = '%% This is a auto generated file, please do not modify it.'
@@ -227,7 +235,7 @@ def render_decode_text(protocol):
 
 
 if __name__ == '__main__':
-    # gen_protobuf_files()
+    gen_protobuf_files()
     protocol = parse_server_map(SERVER_MAP_PATH)
-    print render_proto_define_text(protocol)
-    print render_decode_text(protocol)
+    write_file(render_proto_define_text(protocol), PROTO_MACRO_PATH)
+    write_file(render_decode_text(protocol), DECODE_PROTO_PATH)
