@@ -1,8 +1,6 @@
 %% This is a auto generated file, please do not modify it.
-<<<<<<< HEAD
-=======
+
 -include("proto.hrl").
->>>>>>> bbbe6fcecfec2b526989d64ad8468c255104dd22
 
 -export([decode_record/3]).
 
