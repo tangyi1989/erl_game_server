@@ -13,7 +13,7 @@ BASE := $(shell dirname $(HERE))
 SHELL_DIR := $(shell cd $(BASE) && pwd)
 
 ## ebin 根目录,暂时写死了
-APP_EBIN_ROOT := /data/erl_game_server/ebin/
+APP_EBIN_ROOT := $(HERE)/ebin/
 
 ERL := erl
 ERLC := $(ERL)c
@@ -27,7 +27,7 @@ EBIN_DIR := $(APP_EBIN_ROOT)/common
 ##ELIB_DIR := $(APP_EBIN_ROOT)/library
 
 ##指定编译时查找hrl中的文件
-ERLC_FLAGS := -Werror -I $(INCLUDE_DIRS) -I ../../../hrl -pa $(EBIN_DIR) #-pa $(ELIB_DIR)
+ERLC_FLAGS := -Werror -I $(INCLUDE_DIRS) -I ../../../hrl -pa $(EBIN_DIR)
 ##这里可以通过 make DEBUG=true来达到打开debug_info选项的目的
 ifdef DEBUG
   ERLC_FLAGS += +debug_info

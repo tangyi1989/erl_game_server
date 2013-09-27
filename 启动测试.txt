@@ -1,0 +1,1 @@
+ erl -pz ./app/game/lib/ebin/common ./proto/ebin/common ./app/game/gateway/ebin/common

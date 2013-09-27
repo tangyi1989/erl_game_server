@@ -84,7 +84,7 @@ accept(State=#state{sock=LSock}) ->
 start_client(Sock) ->
     {ok, ClientPid} = supervisor:start_child(client_sup, []),
     ok = gen_tcp:controlling_process(Sock, ClientPid),
-    ClientPid ! {go, Sock}.
+    ClientPid ! {start, Sock}.
 
 
 

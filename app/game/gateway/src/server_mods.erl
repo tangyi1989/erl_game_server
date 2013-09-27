@@ -10,18 +10,8 @@
 -export([start/1]).
 
 start(Port) ->
-    ok = start_kernel(),
     ok = start_client_sup(),
     ok = start_tcp_listener(Port).
-
-start_kernel() ->
-    {ok, _} = supervisor:start_child(server_sup, 
-                                    {
-                                        mod_kernel,
-                                        {mod_kernel, start_link, []},
-                                        permanent, 10000, worker, [mod_kernel]
-                                    }),
-    ok. 
 
 start_client_sup() ->
     {ok, _} = supervisor:start_child(

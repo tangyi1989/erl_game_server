@@ -29,7 +29,7 @@ if __name__ == '__main__':
     login_packet.name = 'tang'
     login_packet.password = 'tangwanwan'
 
-    buf = pack(123, login_packet)
+    buf = pack(101, login_packet)
     print  hex_str(buf)
     sock.send(buf)
 

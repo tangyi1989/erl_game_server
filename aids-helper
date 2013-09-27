@@ -19,7 +19,7 @@ help ()
     echo "aids-helper 服务器辅助脚本使用说明"
     echo "基本语法: aids-helper 命令模块 [option]"
     echo "命令模块："
-    echo "help                  	显示当前帮助内容"
+    echo "help                      显示当前帮助内容"
     echo ""
     exit 0
 }
@@ -28,36 +28,42 @@ help ()
 #有新增工程目录，往这里进行补充代码
 make_make()
 {
-    	Worker=`grep -c 'model name' /proc/cpuinfo`
-	echo "编译开始 ========================"
-	#切换到代码根目录
-	cd $SHELL_DIR
-	
-	#利用多核进行编译
-	cd $SHELL_DIR/app/game/gateway/
-	make -j $Worker
+    Worker=`grep -c 'model name' /proc/cpuinfo`
+    echo "编译开始 ========================"
+    #切换到代码根目录
+    cd $SHELL_DIR
+        
+    #利用多核进行编译
+    cd $SHELL_DIR/app/game/gateway/
+    make -j $Worker
+
+    cd $SHELL_DIR/app/game/lib/
+    make -j $Worker
+
+    cd $SHELL_DIR/proto
+    make -j $Worker
 }
 
 
 
 make_help()
 {
-	echo "aids-helper game make 使用说明"
-	echo "基本语法: aids-helper game make [命令]"
-	echo "命令为空则为直接编译项目"
-	echo "命令模块："
-	echo "help 		显示当前帮助内容"
-	echo "clean 	清理所有子项目编译内容"
-	echo "debug		以debug方式编译"
-	echo ""
-	exit 0
+    echo "aids-helper game make 使用说明"
+    echo "基本语法: aids-helper game make [命令]"
+    echo "命令为空则为直接编译项目"
+    echo "命令模块："
+    echo "help      显示当前帮助内容"
+    echo "clean     清理所有子项目编译内容"
+    echo "debug     以debug方式编译"
+    echo ""
+    exit 0
 }
 
 make_clean()
 {
-		
-	cd $SHELL_DIR/app/game/gateway/
-	make clean
+        
+    cd $SHELL_DIR/app/game/gateway/
+    make clean
 }
 
 
@@ -79,103 +85,103 @@ sub_make ()
 
 
 if [ $# -eq 0 ]; then
-	help
+    help
 fi
 
 
 game_rebuild()
 {
-	make_clean
-	make_make
+    make_clean
+    make_make
 }
 
 game_clean()
 {
-	make_clean
+    make_clean
 }
 
 game_help() 
 {
-	echo "mgectl game 使用说明"
-	echo "基本语法: mgectl game 命令 [option]"
-	echo "命令模块："
-	echo "help 		显示当前帮助内容"
-	echo "make 		同make语法"
-	echo "rebuild 	重新编译，相当于 make clean && make"
-	echo ""
-	exit 0
+    echo "mgectl game 使用说明"
+    echo "基本语法: mgectl game 命令 [option]"
+    echo "命令模块："
+    echo "help      显示当前帮助内容"
+    echo "make      同make语法"
+    echo "rebuild   重新编译，相当于 make clean && make"
+    echo ""
+    exit 0
 }
 
 parse_game()
 {
-	SUB_TARGET=$1
-	shift
-	case $SUB_TARGET in
-		help) game_help ;;
-		make) sub_make $* ;;
-		make_erl) game_make_erl ;;
-		rebuild) game_rebuild ;;
-		*) game_help ;;
-	esac
+    SUB_TARGET=$1
+    shift
+    case $SUB_TARGET in
+        help) game_help ;;
+        make) sub_make $* ;;
+        make_erl) game_make_erl ;;
+        rebuild) game_rebuild ;;
+        *) game_help ;;
+    esac
 }
 
 
 ## 管理功能
 mananger() 
 {
-	COMMAND=$1
-	shift
-	case $COMMAND in
-		#以后服务器的热更新
-		#reload_config) reload_config $*;;
-		#hot_update) hot_update $*;;
-		#mnesia_update) mnesia_update $*;;
-		*) help ;;
-	esac
+    COMMAND=$1
+    shift
+    case $COMMAND in
+        #以后服务器的热更新
+        #reload_config) reload_config $*;;
+        #hot_update) hot_update $*;;
+        #mnesia_update) mnesia_update $*;;
+        *) help ;;
+    esac
 }
 
 ##启动指定的节点
 ## $?表示上个方法的返回值
 start_app()
 {
-	NODE=$1
-	SLAVE_NUM=$2
-	COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
-	if [ $? -eq 0 ] ; then
-		bash -c "$COMMAND"
-	else
-		echo $COMMAND;
-		exit
-	fi
+    NODE=$1
+    SLAVE_NUM=$2
+    COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
+    if [ $? -eq 0 ] ; then
+        bash -c "$COMMAND"
+    else
+        echo $COMMAND;
+        exit
+    fi
 }
 ##启动游戏
 ## $#表示传入方法中的参数的个数
 start_game()
 {
-	if [ $# -ne 0 ] ; then
-		TARGET_NODE=$1
-		SLAVE_NUM=$2
-		##有带参数那么就启动参数中指定的节点
-		start_app $TARGET_NODE $SLAVE_NUM
-	else
-		##缺省状态下启动manager节点
-		start_app manager 1
-	fi
-		
+    if [ $# -ne 0 ] ; then
+        TARGET_NODE=$1
+        SLAVE_NUM=$2
+        ##有带参数那么就启动参数中指定的节点
+        start_app $TARGET_NODE $SLAVE_NUM
+    else
+        ##缺省状态下启动manager节点
+        start_app manager 1
+    fi
+        
 }
 
 ## 获取子shell命令
 TARGET=$1
 shift
 case $TARGET in
-	help) help ;;
-	
-	game) parse_game $* ;;
-	make) sub_make $* ;;
-	make_erl) game_make_erl $* ;;
-	rebuild) game_rebuild $* ;;
-	clean) game_clean $* ;;
-	
-	start) start_game $* ;;
-	*) help ;;
+    help) help ;;
+    
+    game) parse_game $* ;;
+    make) sub_make $* ;;
+    make_erl) game_make_erl $* ;;
+    rebuild) game_rebuild $* ;;
+    clean) game_clean $* ;;
+    
+    start) start_game $* ;;
+    *) help ;;
 esac

@@ -27,7 +27,7 @@ init([]) ->
                 {
                     client_packet_handler, 
                     {
-                        client_packet_handler, start_link, []
+                        client, start_link, []
                     },
                     temporary,
                     brutal_kill,

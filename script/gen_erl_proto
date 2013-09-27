@@ -135,8 +135,8 @@ class Method(ProtocolElement):
     def render_decode_record(self):
         erl_moudle = '%s_pb' % self.module.package.proto_prefix
         decode_mothod = 'decode_%s' % self.name.lower()
-        return 'decode_record(?%s, ?%s, ProtoBuf) -> %s:%s(ProtoBuf)' % (
-            self.module.macro, self.macro, erl_moudle, decode_mothod)
+        return 'decode_packet(?%s, ProtoBuf) -> {?%s, ?%s, %s:%s(ProtoBuf)}' % (
+            self.macro, self.module.macro, self.macro, erl_moudle, decode_mothod)
 
 
 def compile_proto(proto_file, import_dir=None, output_src_dir=None,
@@ -220,7 +220,9 @@ def render_proto_define_text(protocol):
 
 def render_decode_text(protocol):
     notes = '%% This is a auto generated file, please do not modify it.'
-    lines = [notes, '', '-include("proto.hrl").', '-export([decode_record/3]).', '']
+    lines = [notes, '', '-module(decode).',
+             '-include("proto.hrl").', 
+             '-export([decode_packet/2]).', '']
 
     method_lines = []
     methods = protocol.methods
