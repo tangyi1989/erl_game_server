@@ -40,13 +40,14 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-%% @private
+%% 进行初始化，准备接收消息
 handle_info({start, ClientSocket}, init) -> 
     io:format("Start Client...~n"), 
     Ref = async_recv(ClientSocket, 12, ?HEART_TIMEOUT),
     State = #state{receive_status=?WAIT_HEADER, sock=ClientSocket, sock_ref=Ref},
     {noreply, State};
 
+%% 处理网络信息
 handle_info({inet_async, _Socket, _Ref, {ok, Data}}, State) ->
     case handle_socket_data(Data, State) of
         {ok, undefined, NewState} -> 
@@ -74,7 +75,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 %%------------------ internals -------------------------
 
-%% 接受信息，现在对于prim_inet里面的内容还很不了解。
+%% 接受信息.
 async_recv(Sock, Length, Timeout) when is_port(Sock) ->
     case prim_inet:async_recv(Sock, Length, Timeout) of
         {error, Reason} -> throw({Reason});
