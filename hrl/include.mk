@@ -8,8 +8,9 @@
 SHELL := /bin/bash
 .PHONY: all dialyzer clean hrl
 
-HERE := $(shell which "$0" 2>/dev/null || echo .)
-BASE := $(shell dirname $(HERE))
+HERE := $(shell pwd | cut -d "/" -f1-3)
+#$(warning "the value of LOCAL_PATH is$(HERE)")  
+
 SHELL_DIR := $(shell cd $(BASE) && pwd)
 
 ## ebin 根目录,暂时写死了

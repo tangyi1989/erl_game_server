@@ -32,10 +32,17 @@ make_make()
     echo "编译开始 ========================"
     #切换到代码根目录
     cd $SHELL_DIR
-        
+     
+    cp $SHELL_DIR/config/app/* $SHELL_DIR/ebin/common   
     #利用多核进行编译
     cd $SHELL_DIR/app/game/gateway/
     make -j $Worker
+
+    cd $SHELL_DIR/app/game/manager/
+    make -j $worker
+
+    cd $SHELL_DIR/app/game/common/
+    make -j $worker
 
     cd $SHELL_DIR/app/game/lib/
     make -j $Worker

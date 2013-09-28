@@ -11,13 +11,22 @@
 -behaviour(application).
 
 -export([
-	 start/2,
-	 stop/1,
-	 start/0,
-	 stop/0
+	 		start/2,
+	 		stop/1,
+	 		start/0,
+	 		stop/0
         ]).
 
 -define(APPS, [sasl, manager]).
+
+-manager_boot_step({manager, 
+				 	[{description, "manager node to start other nodes"},  %%description
+                   	{mfa, {	manager_node, 	%%module
+                   			start,			%%method
+                            []				%%parameter
+                          }
+                    }]}).
+
 
 %%%-------------------------------------------------------------------
 %%% @doc
@@ -30,7 +39,7 @@ start() ->
 				fun application:start/1,
 				fun application:stop/1,
 				already_start,
-				cannot_start_application
+				cannot_start_application,
 				?APPS
 	).
 
@@ -45,7 +54,7 @@ stop() ->
 				fun application:start/1,
 				fun application:stop/1,
 				not_started,
-				cannot_stop_application
+				cannot_stop_application,
 				?APPS
 	).
 
@@ -56,20 +65,8 @@ stop() ->
 %%%-------------------------------------------------------------------
 start(normal, []) ->
 	{ok, SuperPid} = manager_sup:start(),
-	lists:foreach(
-		fun({Msg, WorkFun})->
-			io:format("start the work ~s ....",[Msg]),
-			WorkFun(),
-			io:format("done~n");
-		end,
-		[
-			{
-				"Node Manager",
-				fun() ->
-					ok = manager_node:start(),
-				end
-			}
-		]),
+	Attributes = common_node:all_module_attributes(manager, manager_boot_step),
+	worker_behaviour(fun lists:foreach/2, Attributes),
 	{ok, SuperPid}.
 
 stop(_State) ->
@@ -92,3 +89,11 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 						throw({error, {ErrorTag, App, Reason}})
 				end
 	end, [], Apps).
+
+worker_behaviour(Iterate, Attributes) ->
+	Iterate(fun({Module, {description, Description}, {mfa, MFA}}) ->
+				io:format("~p module's ~p going ----~n",[Module, Description]),
+				{M, F, A} = MFA,
+				apply(M, F, A),
+				io:format("~p module's ~p done------~n",[Module, Description])
+	end, Attributes).

@@ -17,8 +17,17 @@
 	 stop/0
         ]).
 
+-compile(export_all).
+
 -define(APPS, [sasl, server]).
 
+-server_boot_step({server, 
+				 	[{description, "manager node to start other nodes"},  %%description
+                   	{mfa, {	manager_node, 	%%module
+                   			start,			%%method
+                            []				%%parameter
+                          }
+                    }]}).
 %%%-------------------------------------------------------------------
 %%% @doc
 %%%		负责启动sasl和manager应用程序
@@ -30,7 +39,7 @@ start() ->
 				fun application:start/1,
 				fun application:stop/1,
 				already_start,
-				cannot_start_application
+				cannot_start_application,
 				?APPS
 	).
 
@@ -45,7 +54,7 @@ stop() ->
 				fun application:start/1,
 				fun application:stop/1,
 				not_started,
-				cannot_stop_application
+				cannot_stop_application,
 				?APPS
 	).
 
@@ -56,21 +65,10 @@ stop() ->
 %%%-------------------------------------------------------------------
 start(normal, []) ->
 	%%{ok, SuperPid} = server_sup:start(),
-	lists:foreach(
-		fun({Msg, WorkFun})->
-			io:format("start the work ~s ....",[Msg]),
-			WorkFun(),
-			io:format("done~n");
-		end,
-		[
-			{
-				"Write Finish File",
-				fun() ->
-                	global:send(manager_node, {gateway_node_up, erlang:node()}) %%通知管理节点说自己启动起来了
-        		end
-			}
-		]),
-	{ok, SuperPid}.
+	% Attributes = all_module_attributes(server, server_boot_step),
+	% worker_behaviour(fun lists:foreach/2, Attributes),
+	%%{ok, SuperPid}.
+	do.
 
 stop(_State) ->
     ok.
@@ -92,3 +90,11 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 						throw({error, {ErrorTag, App, Reason}})
 				end
 	end, [], Apps).
+
+worker_behaviour(Iterate, Attributes) ->
+	Iterate(fun({Module, {description, Description}, {mfa, MFA}}) ->
+				io:format("~p module's ~p going ----~n",[Module, Description]),
+				{M, F, A} = MFA,
+				apply(M, F, A),
+				io:format("~p module's ~p done------~n",[Module, Description])
+	end, Attributes).
