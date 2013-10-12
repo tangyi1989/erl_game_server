@@ -16,7 +16,7 @@
 	 		start/0,
 	 		stop/0
         ]).
-
+-compile(export_all).
 -define(APPS, [sasl, manager]).
 
 -manager_boot_step({manager, 
@@ -64,8 +64,8 @@ stop() ->
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	{ok, SuperPid} = manager_sup:start(),
-	Attributes = common_node:all_module_attributes(manager, manager_boot_step),
+	{ok, SuperPid} = manager_sup:start_link(),
+	[Attributes] = common_node:all_module_attributes(manager, manager_boot_step),
 	worker_behaviour(fun lists:foreach/2, Attributes),
 	{ok, SuperPid}.
 
@@ -91,7 +91,7 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	Iterate(fun({Module, {description, Description}, {mfa, MFA}}) ->
+	Iterate(fun({Module, [{description, Description}, {mfa, MFA}]}) ->
 				io:format("~p module's ~p going ----~n",[Module, Description]),
 				{M, F, A} = MFA,
 				apply(M, F, A),

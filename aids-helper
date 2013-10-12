@@ -30,10 +30,7 @@ make_make()
 {
     Worker=`grep -c 'model name' /proc/cpuinfo`
     echo "编译开始 ========================"
-    #切换到代码根目录
-    cd $SHELL_DIR
-     
-    cp $SHELL_DIR/config/app/* $SHELL_DIR/ebin/common   
+   
     #利用多核进行编译
     cd $SHELL_DIR/app/game/gateway/
     make -j $Worker
@@ -49,6 +46,11 @@ make_make()
 
     cd $SHELL_DIR/proto
     make -j $Worker
+   
+    #切换到代码根目录
+    cd $SHELL_DIR
+
+    cp $SHELL_DIR/config/app/* $SHELL_DIR/ebin/common
 }
 
 
@@ -153,7 +155,8 @@ start_app()
 {
     NODE=$1
     SLAVE_NUM=$2
-    COMMAND=`escript $SHELL_DIR/script/erlang_tool/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
+    COMMAND=`escript $SHELL_DIR/script/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
+    echo $COMMAND
     if [ $? -eq 0 ] ; then
         bash -c "$COMMAND"
     else

@@ -23,9 +23,9 @@
 
 -server_boot_step({server, 
 				 	[{description, "manager node to start other nodes"},  %%description
-                   	{mfa, {	manager_node, 	%%module
+                   	{mfa, {	server_mods, 	%%module
                    			start,			%%method
-                            []				%%parameter
+                            [8888]				%%parameter
                           }
                     }]}).
 %%%-------------------------------------------------------------------
@@ -64,11 +64,10 @@ stop() ->
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	%%{ok, SuperPid} = server_sup:start(),
-	% Attributes = all_module_attributes(server, server_boot_step),
-	% worker_behaviour(fun lists:foreach/2, Attributes),
-	%%{ok, SuperPid}.
-	do.
+	{ok, SuperPid} = server_sup:start_link(),
+	[Attributes] = common_node:all_module_attributes(server, server_boot_step),
+	worker_behaviour(fun lists:foreach/2, Attributes),
+	{ok, SuperPid}.
 
 stop(_State) ->
     ok.
@@ -82,8 +81,9 @@ stop(_State) ->
 %%%-------------------------------------------------------------------
 application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, ErrorTag, Apps) ->
 	Iterate(fun(App, Acc) ->
+				io:format("App=~p~n",[App]),
 				case ApplicationStart(App) of
-					ok -> [App | Acc];
+					ok -> io:format("----------------~n"),[App | Acc];
 					{error, {SkipError, _}} -> Acc;
 					{error, Reason} ->
 						lists:foreach(ApplicationStop, Acc),
@@ -92,7 +92,8 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	Iterate(fun({Module, {description, Description}, {mfa, MFA}}) ->
+	io:format("~p~n",[Attributes]),
+	Iterate(fun({Module, [{description, Description}, {mfa, MFA}]}) ->
 				io:format("~p module's ~p going ----~n",[Module, Description]),
 				{M, F, A} = MFA,
 				apply(M, F, A),
