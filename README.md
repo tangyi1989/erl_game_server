@@ -7,3 +7,5 @@
 编译程序：
 ./aids-helper make
 ./aids-helper clean
+
+注意请在aids-helper和start_gateway.sh修改一下日志目录，这些都暂时先写死把

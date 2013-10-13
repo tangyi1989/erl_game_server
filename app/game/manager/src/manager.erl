@@ -19,15 +19,34 @@
 -compile(export_all).
 -define(APPS, [sasl, manager]).
 
--manager_boot_step({manager, 
-				 	[{description, "manager node to start other nodes"},  %%description
-                   	{mfa, {	manager_node, 	%%module
-                   			start,			%%method
-                            []				%%parameter
-                          }
-                    }]}).
+%%-manager_boot_step({manager,
+%%                        [{description, "manager node to start other nodes"},  %%description
+%%                        {mfa, { manager_log,   %%module
+%%                                start,          %%method
+%%                                []              %%parameter
+%%                        }
+%%                    }]}).
 
+%%-manager_boot_step({manager, 
+%%			[{description, "manager node to start other nodes"},  %%description
+%%                   	{mfa, {	manager_node, 	%%module
+%%                   		start,		%%method
+%%                                []		%%parameter
+%%                        }
+%%                    }]}).
 
+-define(Attributes,[
+		{	"manager_node log!!",
+			fun()->
+				manager_log:start()
+			end
+		},
+		{	"start other nodes!!",
+			fun()->
+				manager_node:start()
+			end
+		}
+	]).
 %%%-------------------------------------------------------------------
 %%% @doc
 %%%		负责启动sasl和manager应用程序
@@ -65,8 +84,8 @@ stop() ->
 %%%-------------------------------------------------------------------
 start(normal, []) ->
 	{ok, SuperPid} = manager_sup:start_link(),
-	[Attributes] = common_node:all_module_attributes(manager, manager_boot_step),
-	worker_behaviour(fun lists:foreach/2, Attributes),
+	%%Attributes = common_node:all_module_attributes(manager, manager_boot_step),
+	worker_behaviour(fun lists:foreach/2, ?Attributes),
 	{ok, SuperPid}.
 
 stop(_State) ->
@@ -91,9 +110,8 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	Iterate(fun({Module, [{description, Description}, {mfa, MFA}]}) ->
-				io:format("~p module's ~p going ----~n",[Module, Description]),
-				{M, F, A} = MFA,
-				apply(M, F, A),
-				io:format("~p module's ~p done------~n",[Module, Description])
+	Iterate(fun({Msg, Thunk}) ->
+				io:format("~p going ----~n",[Msg]),
+				Thunk(),
+				io:format("~p done------~n",[Msg])
 	end, Attributes).

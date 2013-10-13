@@ -56,7 +56,7 @@ make_start_command(start_gateway_distribution, server, MasterHost, _SalveNum, Co
 	Command = lists:flatten(lists:concat(
 					["/usr/local/bin/erl -name server@", MasterHost, " ", CodePath, " -detached -setcookie ",
 					 Cookie, " -noinput  -env ERL_MAX_ETS_TABLES 500000  +P 250000 +K true +h ",
-					 "10240 -smp disable -s server -master_node server@", MasterHost])),
+					 "10240 -smp disable -s server -master_node manager@", MasterHost])),
 	Command.
 
 get_cookie() ->

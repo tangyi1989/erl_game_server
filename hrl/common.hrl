@@ -20,3 +20,6 @@
 
 %%ETS
 -define(ETS_ONLINE, ets_online).
+
+
+-define(SYSTEM_LOG(Format, Args), global:send(manager_log, {system_log, erlang:localtime(), Format, Args})).

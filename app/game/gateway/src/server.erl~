@@ -43,7 +43,7 @@
 				server_mods:start(8888)
 			end
 		},
-		%%这里注意要先拼通管理节点啊，要不下面的global:send会报错的，调了两个多钟头
+		%%
 		{	"join manager node!!",
 			fun()->
 				{ok, [[MasterNodeTmp]]} = init:get_argument(master_node),

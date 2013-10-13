@@ -2,64 +2,51 @@
 %%% @author lianweijie <jjchen.lian@gmail.com>
 %%% @copyright (C) 2013, gmail.com
 %%% @doc
-%%%		负责启动管理节点对应的进程,该节点由manager节点负责启动
+%%%		负责启动管理节点对应的进程,该节点由aids-helper启动脚本负责启动
 %%% @end
 %%% Created : 2013-09-25
 %%%-------------------------------------------------------------------
 
--module(server).
+-module(manager).
 -behaviour(application).
--include("common.hrl").
+
 -export([
-	 start/2,
-	 stop/1,
-	 start/0,
-	 stop/0
+	 		start/2,
+	 		stop/1,
+	 		start/0,
+	 		stop/0
         ]).
-
 -compile(export_all).
+-define(APPS, [sasl, manager]).
 
--define(APPS, [sasl, server]).
+-manager_boot_step({manager,
+                        [{description, "manager node to start other nodes"},  %%description
+                        {mfa, { manager_log,   %%module
+                                start,          %%method
+                                []              %%parameter
+                        }
+                    }]}).
 
-%%-server_boot_step({server, 
-%%			[{description, "gateway node handle connect"},  %%description
-%%                   	{mfa, { server_mods, 	%%module
-%%                   	        start,		%%method
-%%                                [8888]		%%parameter
-%%                        }
-%%                    }]}).
-
-%%-server_boot_step({server,
-%%                        [{description, "notify the manager node"},  %%description
-%%                        {mfa, { global,    			    %%module
-%%                                send,          			    %%method
-%%                                []          %%parameter
-%%                        }
-%%                    }]}).
+-manager_boot_step({manager, 
+			[{description, "manager node to start other nodes"},  %%description
+                   	{mfa, {	manager_node, 	%%module
+                   		start,		%%method
+                                []		%%parameter
+                        }
+                    }]}).
 
 -define(Attributes,[
-		{	"gateway node start!!",
+		{	"manager_node log!!",
 			fun()->
-				server_mods:start(8888)
+				manager_log:start()
 			end
 		},
-		%%这里注意要先拼通管理节点啊，要不下面的global:send会报错的，调了两个多钟头
-		{	"join manager node!!",
+		{	"start other nodes!!",
 			fun()->
-				{ok, [[MasterNodeTmp]]} = init:get_argument(master_node),
-				net_kernel:connect_node(erlang:list_to_atom(MasterNodeTmp)),
-				timer:sleep(2000), 
-				ok
-			end
-		},
-		{
-			"notify the manager node!!",
-			fun() ->
-				global:send(manager_node, {gateway_node_up,erlang:node()})
+				manager_node:start()
 			end
 		}
 	]).
-
 %%%-------------------------------------------------------------------
 %%% @doc
 %%%		负责启动sasl和manager应用程序
@@ -96,8 +83,8 @@ stop() ->
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	{ok, SuperPid} = server_sup:start_link(),
-%%	Attributes = common_node:all_module_attributes(server, server_boot_step),
+	{ok, SuperPid} = manager_sup:start_link(),
+	%%Attributes = common_node:all_module_attributes(manager, manager_boot_step),
 	worker_behaviour(fun lists:foreach/2, ?Attributes),
 	{ok, SuperPid}.
 
@@ -123,7 +110,6 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	io:format("Attributes=~p~n",[Attributes]),
 	Iterate(fun({Msg, Thunk}) ->
 				io:format("~p going ----~n",[Msg]),
 				Thunk(),

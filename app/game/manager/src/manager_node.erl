@@ -8,10 +8,11 @@
 %%%-------------------------------------------------------------------
 
 -module(manager_node).
+-include("manager.hrl").
 -export([
 	start/0
 	]).
--compile(export_all).
+
 -define(CONFIG_FILE_PATH, "/data/erl_game_server/script/start_gateway.sh").
 -define(ITEM_LIST, [gateway, map, master_host]).
 
@@ -32,10 +33,12 @@ start() ->
 %%%-------------------------------------------------------------------
 start_gateway_node() ->
 	Command = execute_gateway_command(),
+	?SYSTEM_LOG("~ts~n ~s~n", ["准备启动网关节点", Command]),
+	?SYSTEM_LOG("~p~n",[global:whereis_name(manager_node)]),
 	erlang:open_port({spawn, Command}, [stream]),
-	io:format("--------------------------~n"),
 	receive 
        	{gateway_node_up, NodeName} ->
+            ?SYSTEM_LOG("~ts ~p~n", ["网关节点启动成功", gateway_node]),
             net_kernel:connect_node(NodeName)                                                
     end,
 	do.
@@ -47,5 +50,4 @@ start_gateway_node() ->
 %%%-------------------------------------------------------------------
 execute_gateway_command() ->
 	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_FILE_PATH])),
-	io:format("Command=~p~n",[Command]),
 	Command.

@@ -13,6 +13,8 @@ base="`dirname $here`"
 SHELL_DIR=`(cd "$base"; echo $PWD)`
 
 #echo $SHELL_DIR
+LOGS_DIR="/data/erl_game_server/log"
+MANAGER_LOG_FILE="${LOGS_DIR}/manager_node.log"
 
 help ()
 {
@@ -31,6 +33,7 @@ make_make()
     Worker=`grep -c 'model name' /proc/cpuinfo`
     echo "编译开始 ========================"
    
+    touch_log
     #利用多核进行编译
     cd $SHELL_DIR/app/game/gateway/
     make -j $Worker
@@ -53,7 +56,13 @@ make_make()
     cp $SHELL_DIR/config/app/* $SHELL_DIR/ebin/common
 }
 
-
+touch_log()
+{
+   #创建日志目录
+   [ -d $LOGS_DIR/ ] || mkdir -p $LOGS_DIR/
+   #创建管理节点日志
+   [ -f $MANAGER_LOG_FILE ] || echo '' > $MANAGER_LOG_FILE 
+}
 
 make_help()
 {
@@ -156,8 +165,8 @@ start_app()
     NODE=$1
     SLAVE_NUM=$2
     COMMAND=`escript $SHELL_DIR/script/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
-    echo $COMMAND
     if [ $? -eq 0 ] ; then
+	echo "$COMMAND" >> $MANAGER_LOG_FILE
         bash -c "$COMMAND"
     else
         echo $COMMAND;
@@ -168,6 +177,8 @@ start_app()
 ## $#表示传入方法中的参数的个数
 start_game()
 {
+    [ -d $LOGS_DIR/ ] || mkdir -p $LOGS_DIR/
+    [ ! $MANAGER_LOG_FILE ] || echo '' > $MANAGER_LOG_FILE
     if [ $# -ne 0 ] ; then
         TARGET_NODE=$1
         SLAVE_NUM=$2
@@ -176,6 +187,7 @@ start_game()
     else
         ##缺省状态下启动manager节点
         start_app manager 1
+        tail -f $MANAGER_LOG_FILE
     fi
         
 }
