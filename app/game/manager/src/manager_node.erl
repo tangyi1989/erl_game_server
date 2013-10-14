@@ -12,8 +12,9 @@
 -export([
 	start/0
 	]).
-
--define(CONFIG_FILE_PATH, "/data/erl_game_server/script/start_gateway.sh").
+-compile(export_all).
+-define(CONFIG_GATEWAY_PATH, "/data/erl_game_server/script/start_gateway.sh").
+-define(CONFIG_LOGGER_PATH,"/data/erl_game_server/script/start_logger.sh").
 -define(ITEM_LIST, [gateway, map, master_host]).
 
 %%%-------------------------------------------------------------------
@@ -23,24 +24,40 @@
 %%%-------------------------------------------------------------------
 start() ->
 	yes = global:register_name(manager_node, erlang:self()),
+	start_logger_node(),
 	start_gateway_node(),
 	do.
 
 %%%-------------------------------------------------------------------
 %%% @doc
-%%%		启动网关节点,并且等待网关节点的响应
+%%%             启动日志节点,并且等待管理节点的响应
+%%% @end
+%%%-------------------------------------------------------------------
+start_logger_node() ->
+	Command = execute_logger_command(),
+	?SYSTEM_LOG("~ts~n ~s~n",["准备启动日志节点", Command]),
+	erlang:open_port({spawn, Command}, [stream]),
+	receive
+	{logger_node_up, NodeName} ->
+		?SYSTEM_LOG("~ts~n ~s~n",["日志节点启动成功", NodeName]),
+		net_kernel:connect_node(NodeName)
+	end,
+	do.
+
+%%%-------------------------------------------------------------------
+%%% @doc
+%%%		启动网关节点,并且等待管理节点的响应
 %%% @end
 %%%-------------------------------------------------------------------
 start_gateway_node() ->
 	Command = execute_gateway_command(),
 	?SYSTEM_LOG("~ts~n ~s~n", ["准备启动网关节点", Command]),
-	?SYSTEM_LOG("~p~n",[global:whereis_name(manager_node)]),
 	erlang:open_port({spawn, Command}, [stream]),
 	receive 
        	{gateway_node_up, NodeName} ->
-            ?SYSTEM_LOG("~ts ~p~n", ["网关节点启动成功", gateway_node]),
+            ?SYSTEM_LOG("~ts ~p~n", ["网关节点启动成功", NodeName]),
             net_kernel:connect_node(NodeName)                                                
-    end,
+    	end,
 	do.
 
 %%%-------------------------------------------------------------------
@@ -49,5 +66,14 @@ start_gateway_node() ->
 %%% @end
 %%%-------------------------------------------------------------------
 execute_gateway_command() ->
-	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_FILE_PATH])),
+	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_GATEWAY_PATH])),
+	Command.
+
+%%%-------------------------------------------------------------------
+%%% @doc
+%%%             生成启动日志节点脚本命令行
+%%% @end
+%%%-------------------------------------------------------------------
+execute_logger_command() ->
+	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_LOGGER_PATH])),
 	Command.

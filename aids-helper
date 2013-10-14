@@ -41,6 +41,9 @@ make_make()
     cd $SHELL_DIR/app/game/manager/
     make -j $worker
 
+    cd $SHELL_DIR/app/game/logging/
+    make -j $worker
+
     cd $SHELL_DIR/app/game/common/
     make -j $worker
 
@@ -164,7 +167,7 @@ start_app()
 {
     NODE=$1
     SLAVE_NUM=$2
-    COMMAND=`escript $SHELL_DIR/script/host_info.erl get_start_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
+    COMMAND=`escript $SHELL_DIR/script/host_info.erl start_manager_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
     if [ $? -eq 0 ] ; then
 	echo "$COMMAND" >> $MANAGER_LOG_FILE
         bash -c "$COMMAND"

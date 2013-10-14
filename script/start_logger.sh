@@ -9,8 +9,7 @@ SHELL_DIR=`(cd "$base"; echo $PWD)`
 
 MANAGER_LOG_FILE=/data/erl_game_server/log/manager_node.log
 #ARGS=$@
-
-COMMAND=`escript $SHELL_DIR/script/host_info.erl start_gateway_command server 1 | sed 's/\"//g'; exit $?`
+COMMAND=`escript $SHELL_DIR/script/host_info.erl start_logger_command logger 1 | sed 's/\"//g'; exit $?`
 
 if [ $? -eq 0 ] ; then
 	echo "$COMMAND" >> $MANAGER_LOG_FILE
