@@ -49,6 +49,9 @@ make_make()
 
     cd $SHELL_DIR/proto
     make -j $Worker
+
+    cd $SHELL_DIR/app/game/map
+    make -j $Worker
 }
 
 
@@ -70,6 +73,12 @@ make_clean()
 {
         
     cd $SHELL_DIR/app/game/gateway/
+    make clean
+
+    cd $SHELL_DIR/app/game/proto/
+    make clean
+
+    cd $SHELL_DIR/app/game/map/
     make clean
 }
 
