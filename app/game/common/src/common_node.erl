@@ -23,12 +23,14 @@ module_attributes(Module) ->
             V
     end.
 
-all_module_attributes(Modules, Name) ->
-    lists:foldl(
-      fun (Module, Acc) ->
-              case lists:append([Atts || {N, Atts} <- module_attributes(Module),
-                                         N =:= Name]) of
-                  []   -> Acc;
-                  Atts -> [Atts | Acc]
-              end
-      end, [], Modules).
+all_module_attributes(Module, Name) ->
+    %%lists:foldl(
+    %%  fun (Module, Acc) ->
+	io:format("~p~n",[module_attributes(Module)]),
+    [Atts || {N,Atts} <- module_attributes(Module), N=:= Name].
+    %%case lists:append([Atts || {N, Atts} <- module_attributes(Module),
+     %%                                    N =:= Name]) of
+     %%   []   -> [];
+     %%   Atts -> [Atts | Acc]
+   %%end.
+    %%  end, [], Modules).

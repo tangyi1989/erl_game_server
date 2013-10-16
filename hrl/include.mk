@@ -28,7 +28,7 @@ EBIN_DIR := $(APP_EBIN_ROOT)/common
 ##ELIB_DIR := $(APP_EBIN_ROOT)/library
 
 ##指定编译时查找hrl中的文件
-ERLC_FLAGS := -Werror -I $(INCLUDE_DIRS) -I ../../../hrl -pa $(EBIN_DIR)
+ERLC_FLAGS := -I $(INCLUDE_DIRS) -I ../../../hrl -pa $(EBIN_DIR)
 ##这里可以通过 make DEBUG=true来达到打开debug_info选项的目的
 ifdef DEBUG
   ERLC_FLAGS += +debug_info

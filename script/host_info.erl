@@ -43,20 +43,28 @@ main(CommandList) ->
 			end
 	end.
 
-make_start_command(get_start_command, manager, MasterHost, _SalveNum, CodePath) ->
+make_start_command(start_manager_command, TargeNode, MasterHost, _SalveNum, CodePath) ->
 	Cookie = get_cookie(),
 	Command = lists:flatten(lists:concat(
 					["/usr/local/bin/erl -name manager@", MasterHost, " ", CodePath, " -detached -setcookie ",
-					 Cookie, " -noinput  -env ERL_MAX_ETS_TABLES 500000  +P 250000 +K true +h ",
-					 "10240 -smp disable -s manager -master_node manager@", MasterHost])),
+					 Cookie, " -noinput -env ERL_MAX_ETS_TABLES 500000 +P 250000 +K true +h ",
+					 "10240 -smp disable -s ", TargeNode, " -master_node manager@", MasterHost])),
 	Command;
 
-make_start_command(start_gateway_distribution, server, MasterHost, _SalveNum, CodePath) ->
+make_start_command(start_gateway_command, TargeNode, MasterHost, _SalveNum, CodePath) ->
 	Cookie = get_cookie(),
 	Command = lists:flatten(lists:concat(
 					["/usr/local/bin/erl -name server@", MasterHost, " ", CodePath, " -detached -setcookie ",
-					 Cookie, " -noinput  -env ERL_MAX_ETS_TABLES 500000  +P 250000 +K true +h ",
-					 "10240 -smp disable -s server -master_node server@", MasterHost])),
+					 Cookie, " -noinput -env ERL_MAX_ETS_TABLES 500000 +P 250000 +K true +h ",
+					 "10240 -smp disable -s ", TargeNode, " -master_node manager@", MasterHost])),
+	Command;
+
+make_start_command(start_logger_command, TargeNode, MasterHost, _SalveNum, CodePath) ->
+	Cookie = get_cookie(),
+	Command = lists:flatten(lists:concat(
+					["/usr/local/bin/erl -name logger@", MasterHost, " ", CodePath, " -detached -setcookie ",
+					Cookie, " -noinput -env ERL_MAX_ETS_TABLES 500000 +P 2500000 +K true +h ",
+					"10240 -smp disable -s ", TargeNode, " -master_node manager@", MasterHost])),
 	Command.
 
 get_cookie() ->
@@ -111,5 +119,5 @@ assert_config(ConfigList) ->
 	Return.
 
 show_help() ->
-	io:format("语法：php host_info.php 命令 节点名称~n"),
-	io:format("例如 php host_info.php get_debug_command login~n~n").
+	io:format("语法：escript host_info.erl 命令 节点名称~n"),
+	io:format("例如 escript host_info.erl get_debug_command login~n~n").

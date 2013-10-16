@@ -9,7 +9,7 @@
 
 -module(server).
 -behaviour(application).
-
+-include("common.hrl").
 -export([
 	 start/2,
 	 stop/1,
@@ -21,13 +21,45 @@
 
 -define(APPS, [sasl, server]).
 
--server_boot_step({server, 
-				 	[{description, "manager node to start other nodes"},  %%description
-                   	{mfa, {	manager_node, 	%%module
-                   			start,			%%method
-                            []				%%parameter
-                          }
-                    }]}).
+%%-server_boot_step({server, 
+%%			[{description, "gateway node handle connect"},  %%description
+%%                   	{mfa, { server_mods, 	%%module
+%%                   	        start,		%%method
+%%                                [8888]		%%parameter
+%%                        }
+%%                    }]}).
+
+%%-server_boot_step({server,
+%%                        [{description, "notify the manager node"},  %%description
+%%                        {mfa, { global,    			    %%module
+%%                                send,          			    %%method
+%%                                []          %%parameter
+%%                        }
+%%                    }]}).
+
+-define(Attributes,[
+		{	"gateway node start!!",
+			fun()->
+				server_mods:start(8888)
+			end
+		},
+		%%这里注意要先拼通管理节点啊，要不下面的global:send会报错的，调了两个多钟头
+		{	"join manager node!!",
+			fun()->
+				{ok, [[MasterNodeTmp]]} = init:get_argument(master_node),
+				net_kernel:connect_node(erlang:list_to_atom(MasterNodeTmp)),
+				timer:sleep(2000), 
+				ok
+			end
+		},
+		{
+			"notify the manager node!!",
+			fun() ->
+				global:send(manager_node, {gateway_node_up,erlang:node()})
+			end
+		}
+	]).
+
 %%%-------------------------------------------------------------------
 %%% @doc
 %%%		负责启动sasl和manager应用程序
@@ -64,11 +96,10 @@ stop() ->
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	%%{ok, SuperPid} = server_sup:start(),
-	% Attributes = all_module_attributes(server, server_boot_step),
-	% worker_behaviour(fun lists:foreach/2, Attributes),
-	%%{ok, SuperPid}.
-	do.
+	{ok, SuperPid} = server_sup:start_link(),
+%%	Attributes = common_node:all_module_attributes(server, server_boot_step),
+	worker_behaviour(fun lists:foreach/2, ?Attributes),
+	{ok, SuperPid}.
 
 stop(_State) ->
     ok.
@@ -92,9 +123,9 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	Iterate(fun({Module, {description, Description}, {mfa, MFA}}) ->
-				io:format("~p module's ~p going ----~n",[Module, Description]),
-				{M, F, A} = MFA,
-				apply(M, F, A),
-				io:format("~p module's ~p done------~n",[Module, Description])
+	io:format("Attributes=~p~n",[Attributes]),
+	Iterate(fun({Msg, Thunk}) ->
+				io:format("~p going ----~n",[Msg]),
+				Thunk(),
+				io:format("~p done------~n",[Msg])
 	end, Attributes).

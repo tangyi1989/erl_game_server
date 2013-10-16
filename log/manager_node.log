@@ -1,0 +1,11 @@
+
+/usr/local/bin/erl -name manager@127.0.0.1  -pa /data/erl_game_server/ebin/common -pa /data/erl_game_server/ebin -detached -setcookie 123456 -noinput -env ERL_MAX_ETS_TABLES 500000 +P 250000 +K true +h 10240 -smp disable -s manager -master_node manager@127.0.0.1
+system_info manager_node_log  ==== 2013-10-15 00:48:16 ===准备启动日志节点
+ bash /data/erl_game_server/script/start_logger.sh
+/usr/local/bin/erl -name logger@127.0.0.1  -pa /data/erl_game_server/ebin/common -pa /data/erl_game_server/ebin -detached -setcookie 123456 -noinput -env ERL_MAX_ETS_TABLES 500000 +P 2500000 +K true +h 10240 -smp disable -s logger -master_node manager@127.0.0.1
+system_info manager_node_log  ==== 2013-10-15 00:48:18 ===日志节点启动成功
+ logger@127.0.0.1
+system_info manager_node_log  ==== 2013-10-15 00:48:18 ===准备启动网关节点
+ bash /data/erl_game_server/script/start_gateway.sh
+/usr/local/bin/erl -name server@127.0.0.1  -pa /data/erl_game_server/ebin/common -pa /data/erl_game_server/ebin -detached -setcookie 123456 -noinput -env ERL_MAX_ETS_TABLES 500000 +P 250000 +K true +h 10240 -smp disable -s server -master_node manager@127.0.0.1
+system_info manager_node_log  ==== 2013-10-15 00:48:20 ===网关节点启动成功 'server@127.0.0.1'

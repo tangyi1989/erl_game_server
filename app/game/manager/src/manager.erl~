@@ -19,21 +19,21 @@
 -compile(export_all).
 -define(APPS, [sasl, manager]).
 
-%%-manager_boot_step({manager,
-%%                        [{description, "manager node to start other nodes"},  %%description
-%%                        {mfa, { manager_log,   %%module
-%%                                start,          %%method
-%%                                []              %%parameter
-%%                        }
-%%                    }]}).
+-manager_boot_step({manager,
+                        [{description, "manager node to start other nodes"},  %%description
+                        {mfa, { manager_log,   %%module
+                                start,          %%method
+                                []              %%parameter
+                        }
+                    }]}).
 
-%%-manager_boot_step({manager, 
-%%			[{description, "manager node to start other nodes"},  %%description
-%%                   	{mfa, {	manager_node, 	%%module
-%%                   		start,		%%method
-%%                                []		%%parameter
-%%                        }
-%%                    }]}).
+-manager_boot_step({manager, 
+			[{description, "manager node to start other nodes"},  %%description
+                   	{mfa, {	manager_node, 	%%module
+                   		start,		%%method
+                                []		%%parameter
+                        }
+                    }]}).
 
 -define(Attributes,[
 		{	"manager_node log!!",

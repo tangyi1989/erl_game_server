@@ -7,3 +7,6 @@
 编译程序：
 ./aids-helper make
 ./aids-helper clean
+
+注意请在aids-helper和start_gateway.sh修改一下日志目录，这些都暂时先写死把
+如果看到当前shell下面打印出网关节点启动成功那么说明管理节点和网关节点已经正常工作

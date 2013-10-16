@@ -2,12 +2,12 @@
 %%% @author lianweijie <jjchen.lian@gmail.com>
 %%% @copyright (C) 2013, gmail.com
 %%% @doc
-%%%		负责启动管理节点对应的进程,该节点由aids-helper启动脚本负责启动
+%%%		负责启动日志节点
 %%% @end
-%%% Created : 2013-09-25
+%%% Created : 2013-10-14
 %%%-------------------------------------------------------------------
 
--module(manager).
+-module(logger).
 -behaviour(application).
 
 -export([
@@ -17,33 +17,21 @@
 	 		stop/0
         ]).
 -compile(export_all).
--define(APPS, [sasl, manager]).
+-define(APPS, [sasl, logger]).
 
-%%-manager_boot_step({manager,
-%%                        [{description, "manager node to start other nodes"},  %%description
-%%                        {mfa, { manager_log,   %%module
-%%                                start,          %%method
-%%                                []              %%parameter
-%%                        }
-%%                    }]}).
-
-%%-manager_boot_step({manager, 
-%%			[{description, "manager node to start other nodes"},  %%description
-%%                   	{mfa, {	manager_node, 	%%module
-%%                   		start,		%%method
-%%                                []		%%parameter
-%%                        }
-%%                    }]}).
 
 -define(Attributes,[
-		{	"manager_node log!!",
+		{       "join manager node!!",
+                        fun()->
+                                {ok, [[MasterNodeTmp]]} = init:get_argument(master_node),
+                                net_kernel:connect_node(erlang:list_to_atom(MasterNodeTmp)),
+                                timer:sleep(2000),
+                                ok
+                        end
+                },
+		{	"notify the manager node!!",
 			fun()->
-				manager_log:start()
-			end
-		},
-		{	"start other nodes!!",
-			fun()->
-				manager_node:start()
+				global:send(manager_node, {logger_node_up, erlang:node()})
 			end
 		}
 	]).
@@ -64,7 +52,7 @@ start() ->
 
 %%%-------------------------------------------------------------------
 %%% @doc
-%%%		负责关闭sasl和manager应用程序
+%%%		负责关闭sasl和logger应用程序
 %%% @end
 %%%-------------------------------------------------------------------
 stop() ->
@@ -79,12 +67,11 @@ stop() ->
 
 %%%-------------------------------------------------------------------
 %%% @doc
-%%%		负责manager应用程序中的子进程,改方法在manager.app配置中
+%%%		负责logger应用程序中的子进程,该方法在logger.app配置中
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	{ok, SuperPid} = manager_sup:start_link(),
-	%%Attributes = common_node:all_module_attributes(manager, manager_boot_step),
+	{ok, SuperPid} = logger_sup:start_link(),
 	worker_behaviour(fun lists:foreach/2, ?Attributes),
 	{ok, SuperPid}.
 

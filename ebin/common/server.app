@@ -1,5 +1,5 @@
 {application, server,
- [{description, game engine line server!"},
+ [{description, "engine manager Server!"},
   {id, "server"},
   {vsn, "0.1"},
   {modules, [server]},
