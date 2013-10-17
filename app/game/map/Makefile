@@ -14,7 +14,7 @@ include ../../../hrl/include.mk
 $(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/%.erl 
 	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
 
-$(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/mod/*.erl
+$(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/mod/%.erl
 	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
 
 $(EBIN_DIR)/%.$(EMULATOR): $(hrl) unittest/%.erl
