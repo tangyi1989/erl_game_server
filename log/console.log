@@ -1,0 +1,15 @@
+2013-10-17 00:48:17.067 [info] <0.6.0> Application lager started on node 'lqg@joe-ThinkPad-Edge-E431'
+2013-10-17 00:48:27.760 [info] <0.38.0>@test_log:t:8 lqg
+2013-10-17 22:47:48.491 [info] <0.6.0> Application lager started on node 'lqg@joe-ThinkPad-Edge-E431'
+2013-10-17 22:48:05.231 [info] <0.59.0>@test_log:t:8 lqg
+2013-10-17 22:48:31.573 [info] <0.6.0> Application lager started on node 'lqg@joe-ThinkPad-Edge-E431'
+2013-10-17 22:48:38.551 [info] <0.38.0>@test_log:t:8 lqg
+2013-10-17 22:50:38.688 [info] <0.6.0> Application lager started on node 'kk@127.0.0.1'
+2013-10-17 22:51:41.643 [info] <0.38.0>@test_log:t:8 lqg
+2013-10-17 22:55:19.923 [info] <0.6.0> Application lager started on node 'dd@127.0.01'
+2013-10-17 23:03:27.739 [info] <0.6.0> Application lager started on node 'dd@127.0.01'
+2013-10-17 23:08:22.706 [info] <0.6.0> Application lager started on node 'kk@127.0.0.1'
+2013-10-18 00:13:20.750 [info] <0.6.0> Application lager started on node 'manager@127.0.0.1'
+2013-10-18 00:13:21.148 [info] <0.6.0> Application lager started on node 'server@127.0.0.1'
+2013-10-18 00:13:23.164 [info] <0.6.0> Application server started on node 'server@127.0.0.1'
+2013-10-18 00:13:23.165 [info] <0.6.0> Application manager started on node 'manager@127.0.0.1'

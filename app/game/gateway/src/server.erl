@@ -19,7 +19,7 @@
 
 -compile(export_all).
 
--define(APPS, [sasl, server]).
+-define(APPS, [sasl, lager, server]).
 
 %%-server_boot_step({server, 
 %%			[{description, "gateway node handle connect"},  %%description

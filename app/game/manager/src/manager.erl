@@ -17,7 +17,7 @@
 	 		stop/0
         ]).
 -compile(export_all).
--define(APPS, [sasl, manager]).
+-define(APPS, [sasl, lager, manager]).
 
 %%-manager_boot_step({manager,
 %%                        [{description, "manager node to start other nodes"},  %%description
