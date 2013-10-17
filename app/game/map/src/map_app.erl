@@ -36,7 +36,7 @@ start(_StartType, _StartArgs) ->
                 end
             }
             ,{
-                "Launch Maps",
+                "Launch Map Prorcesses",
                 fun() ->
                     MapList = mod_map_loader:get_all_maps(),
                     lists:foreach(fun({MapId, _MapType}) ->

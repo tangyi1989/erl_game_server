@@ -148,7 +148,7 @@ load_mcm_map_file(ConfDir, FileName) ->
             end  
     end,
 
-    ets:insert(?ETS_IN_MAP_DATA, {MapId, {MapId, Data}}),
+    ets:insert(?ETS_IN_MAP_DATA, {MapId, {MapId, MapType, TileRow, TileCol, Data}}),
     ets:insert(?ETS_MAPS, {MapId, MapType}),
     ok.
 
