@@ -50,8 +50,8 @@ make_make()
     cd $SHELL_DIR/app/game/lib/
     make -j $Worker
 
-    cd $SHELL_DIR/proto
-    make -j $Worker
+    #cd $SHELL_DIR/proto
+    #make -j $Worker
 
     cd $SHELL_DIR/app/game/map
     make -j $Worker
