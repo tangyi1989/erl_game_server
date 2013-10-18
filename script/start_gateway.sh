@@ -13,7 +13,7 @@ MANAGER_LOG_FILE=/data/erl_game_server/log/manager_node.log
 COMMAND=`escript $SHELL_DIR/script/host_info.erl start_gateway_command server 1 | sed 's/\"//g'; exit $?`
 
 if [ $? -eq 0 ] ; then
-	echo "$COMMAND" >> $MANAGER_LOG_FILE
+	#echo "$COMMAND" >> $MANAGER_LOG_FILE
 	bash -c "$COMMAND"
 else
 	echo $COMMAND

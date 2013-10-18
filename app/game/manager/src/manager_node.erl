@@ -9,6 +9,8 @@
 
 -module(manager_node).
 -include("manager.hrl").
+-include("logger.hrl").
+
 -export([
 	start/0
 	]).
@@ -51,11 +53,11 @@ start() ->
 %%%-------------------------------------------------------------------
 start_gateway_node() ->
 	Command = execute_gateway_command(),
-	?SYSTEM_LOG("~ts~n ~s~n", ["准备启动网关节点", Command]),
+	?INFO("==========READY TO START GATEWAY NODE========="),
 	erlang:open_port({spawn, Command}, [stream]),
 	receive 
        	{gateway_node_up, NodeName} ->
-            ?SYSTEM_LOG("~ts ~p~n", ["网关节点启动成功", NodeName]),
+            ?INFO("======~p GATEWAY NODE START SUCCESSFUL=====", [NodeName]),
             net_kernel:connect_node(NodeName)                                                
     	end,
 	do.

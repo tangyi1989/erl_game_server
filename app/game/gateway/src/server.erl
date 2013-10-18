@@ -10,6 +10,7 @@
 -module(server).
 -behaviour(application).
 -include("common.hrl").
+-include("logger.hrl").
 -export([
 	 start/2,
 	 stop/1,
@@ -38,13 +39,13 @@
 %%                    }]}).
 
 -define(Attributes,[
-		{	"gateway node start!!",
+		{	"server_mods process",
 			fun()->
 				server_mods:start(8888)
 			end
 		},
 		%%这里注意要先拼通管理节点啊，要不下面的global:send会报错的，调了两个多钟头
-		{	"join manager node!!",
+		{	"join manager node",
 			fun()->
 				{ok, [[MasterNodeTmp]]} = init:get_argument(master_node),
 				net_kernel:connect_node(erlang:list_to_atom(MasterNodeTmp)),
@@ -53,7 +54,7 @@
 			end
 		},
 		{
-			"notify the manager node!!",
+			"notify the manager node",
 			fun() ->
 				global:send(manager_node, {gateway_node_up,erlang:node()})
 			end
@@ -123,9 +124,8 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 	end, [], Apps).
 
 worker_behaviour(Iterate, Attributes) ->
-	io:format("Attributes=~p~n",[Attributes]),
 	Iterate(fun({Msg, Thunk}) ->
-				io:format("~p going ----~n",[Msg]),
+				?INFO("===========~p ready start===========",[Msg]),
 				Thunk(),
-				io:format("~p done------~n",[Msg])
+				?INFO("===========~p start end=============",[Msg])
 	end, Attributes).

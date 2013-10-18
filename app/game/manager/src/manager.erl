@@ -10,6 +10,8 @@
 -module(manager).
 -behaviour(application).
 
+-include("logger.hrl").
+
 -export([
 	 		start/2,
 	 		stop/1,
@@ -19,29 +21,9 @@
 -compile(export_all).
 -define(APPS, [sasl, lager, manager]).
 
-%%-manager_boot_step({manager,
-%%                        [{description, "manager node to start other nodes"},  %%description
-%%                        {mfa, { manager_log,   %%module
-%%                                start,          %%method
-%%                                []              %%parameter
-%%                        }
-%%                    }]}).
-
-%%-manager_boot_step({manager, 
-%%			[{description, "manager node to start other nodes"},  %%description
-%%                   	{mfa, {	manager_node, 	%%module
-%%                   		start,		%%method
-%%                                []		%%parameter
-%%                        }
-%%                    }]}).
 
 -define(Attributes,[
-		{	"manager_node log!!",
-			fun()->
-				manager_log:start()
-			end
-		},
-		{	"start other nodes!!",
+		{	"manager_node process",
 			fun()->
 				manager_node:start()
 			end
@@ -84,7 +66,6 @@ stop() ->
 %%%-------------------------------------------------------------------
 start(normal, []) ->
 	{ok, SuperPid} = manager_sup:start_link(),
-	%%Attributes = common_node:all_module_attributes(manager, manager_boot_step),
 	worker_behaviour(fun lists:foreach/2, ?Attributes),
 	{ok, SuperPid}.
 
@@ -111,7 +92,7 @@ application_behaviour(Iterate, ApplicationStart, ApplicationStop, SkipError, Err
 
 worker_behaviour(Iterate, Attributes) ->
 	Iterate(fun({Msg, Thunk}) ->
-				io:format("~p going ----~n",[Msg]),
+				?INFO("=============~p ready start===========",[Msg]),
 				Thunk(),
-				io:format("~p done------~n",[Msg])
+				?INFO("=============~p start end==========",[Msg])
 	end, Attributes).

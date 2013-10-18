@@ -14,7 +14,7 @@ SHELL_DIR=`(cd "$base"; echo $PWD)`
 
 #echo $SHELL_DIR
 LOGS_DIR="/data/erl_game_server/log"
-MANAGER_LOG_FILE="${LOGS_DIR}/manager_node.log"
+MANAGER_LOG_FILE="${LOGS_DIR}/console.log"
 
 help ()
 {
@@ -180,7 +180,7 @@ start_app()
     SLAVE_NUM=$2
     COMMAND=`escript $SHELL_DIR/script/host_info.erl start_manager_command $NODE $SLAVE_NUM | sed 's/\"//g'; exit $?`
     if [ $? -eq 0 ] ; then
-	echo "$COMMAND" >> $MANAGER_LOG_FILE
+	echo "=======READY START MANAGER NODE=========" >> $MANAGER_LOG_FILE
         bash -c "$COMMAND"
     else
         echo $COMMAND;
@@ -201,7 +201,7 @@ start_game()
     else
         ##缺省状态下启动manager节点
         start_app manager 1
-        tail -f $MANAGER_LOG_FILE
+     #   tail -f $MANAGER_LOG_FILE
     fi
         
 }
