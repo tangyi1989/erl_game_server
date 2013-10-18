@@ -12,10 +12,10 @@ include ../../../hrl/include.mk
 
 ##使用通配符方式指定每个文件的编译规则
 $(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/%.erl 
-	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
+	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) +'{parse_transform, lager_transform}' +'{lager_truncation_size, 1024}' $<
 
-$(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/mod/%.erl
-	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
+$(EBIN_DIR)/%.$(EMULATOR): $(hrl) src/mod/*.erl
+	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) +'{parse_transform, lager_transform}' +'{lager_truncation_size, 1024}' $<
 
 $(EBIN_DIR)/%.$(EMULATOR): $(hrl) unittest/%.erl
-	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
+	$(ERLC2) $(ERLC_FLAGS) -o $(EBIN_DIR) +'{parse_transform, lager_transform}' +'{lager_truncation_size, 1024}' $<

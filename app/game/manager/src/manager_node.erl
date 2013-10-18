@@ -24,7 +24,7 @@
 %%%-------------------------------------------------------------------
 start() ->
 	yes = global:register_name(manager_node, erlang:self()),
-	start_logger_node(),
+%%	start_logger_node(),
 	start_gateway_node(),
 	do.
 
@@ -33,16 +33,16 @@ start() ->
 %%%             启动日志节点,并且等待管理节点的响应
 %%% @end
 %%%-------------------------------------------------------------------
-start_logger_node() ->
-	Command = execute_logger_command(),
-	?SYSTEM_LOG("~ts~n ~s~n",["准备启动日志节点", Command]),
-	erlang:open_port({spawn, Command}, [stream]),
-	receive
-	{logger_node_up, NodeName} ->
-		?SYSTEM_LOG("~ts~n ~s~n",["日志节点启动成功", NodeName]),
-		net_kernel:connect_node(NodeName)
-	end,
-	do.
+%%start_logger_node() ->
+%%	Command = execute_logger_command(),
+%%	?SYSTEM_LOG("~ts~n ~s~n",["准备启动日志节点", Command]),
+%%	erlang:open_port({spawn, Command}, [stream]),
+%%	receive
+%%	{logger_node_up, NodeName} ->
+%%		?SYSTEM_LOG("~ts~n ~s~n",["日志节点启动成功", NodeName]),
+%%		net_kernel:connect_node(NodeName)
+%%	end,
+%%	do.
 
 %%%-------------------------------------------------------------------
 %%% @doc
@@ -74,6 +74,6 @@ execute_gateway_command() ->
 %%%             生成启动日志节点脚本命令行
 %%% @end
 %%%-------------------------------------------------------------------
-execute_logger_command() ->
-	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_LOGGER_PATH])),
-	Command.
+%%execute_logger_command() ->
+%%	Command = lists:flatten(lists:concat(["bash ", ?CONFIG_LOGGER_PATH])),
+%%	Command.
