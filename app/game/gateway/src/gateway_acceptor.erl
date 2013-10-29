@@ -1,5 +1,5 @@
 %%-------------------------------------
-%% @Module : server_listener
+%% @Module : gateway_listener
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.19
@@ -7,7 +7,7 @@
 %%-------------------------------------
 
 
--module(server_acceptor).
+-module(gateway_acceptor).
 -behaviour(gen_server).
 
 -record(state, {sock, ref}).

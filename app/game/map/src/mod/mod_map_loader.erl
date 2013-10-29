@@ -118,8 +118,8 @@ load_mcm_map_file(ConfDir, FileName) ->
 
     %% 读取文件的header部分
     <<MapId:32, MapType:32, _MapName:256, _:256, TileRow:32, 
-      TileCol:32, ElementNum:32, JumpPointNum:32, OffsetX:32, 
-      OffsetY:32, TW:32, TH:32, DataSection/binary>> = RawBin,
+      TileCol:32, ElementNum:32, JumpPointNum:32, _OffsetX:32, 
+      _OffsetY:32, _TW:32, _TH:32, DataSection/binary>> = RawBin,
 
     %% 读取Tile部分
     TileLength = TileRow * TileCol * 8,
@@ -162,10 +162,9 @@ load_mcm_tile(<<>>, _Tx, _Ty, _TileCol) ->
 load_mcm_tile(TileData, Tx, Ty, TileCol) ->
     <<Tile:8/bitstring, DataRemain/binary>> = TileData,
     
-    <<_YuLiu:1, Arena:1, Sell:1, AllSafe:1, Safe:1, _Run:1, _Alpha:1, Exist:1>> = Tile,
+    <<_YuLiu:1, _Arena:1, _Sell:1, _AllSafe:1, _Safe:1, _Run:1, _Alpha:1, Exist:1>> = Tile,
     case Exist =:= 1 of 
         true ->
-            %%io:format("Tx:~p Ty:~p Tile:~p~n", [Tx, Ty, Tile]),
             ets:insert(?ETS_MAP_DATA_TMP, {{Tx, Ty}, reversed});
         _ ->
             ok
@@ -185,8 +184,7 @@ load_mcm_tile(TileData, Tx, Ty, TileCol) ->
 load_mcm_element_tile(0, DataBin, _MapId) ->
     {ok, DataBin};
 load_mcm_element_tile(ElementNum, DataBin, MapId) ->
-    <<ID:32, IndexTx:32, IndexTy:32, Type:32, Link:32, DataRemain/binary>> = DataBin,
-    %%io:format("Tx:~p, Ty:~p: ID:~p~n", [IndexTx, IndexTy, ID]),
+    <<_ID:32, _IndexTx:32, _IndexTy:32, _Type:32, Link:32, DataRemain/binary>> = DataBin,
     DataLength = Link * 8,
     <<_:DataLength/bitstring, DataRemain2/binary>> = DataRemain,
     load_mcm_element_tile(ElementNum-1, DataRemain2, MapId).
@@ -199,10 +197,9 @@ load_mcm_element_tile(ElementNum, DataBin, MapId) ->
 load_mcm_jump_tile(0, _DataBin, _MapId) ->
     ok;
 load_mcm_jump_tile(JumpPointNum, DataBin, MapId) ->
-    <<_ID:32, IndexTX:32, IndexTY:32,TargetMapID:32, 
-      TIndexTX:32, TIndexTY:32, _HW:32, _YL:32, _WL:32, 
+    <<_ID:32, _IndexTX:32, _IndexTY:32, _TargetMapID:32, 
+      _TIndexTX:32, _TIndexTY:32, _HW:32, _YL:32, _WL:32, 
       _MinLevel:32, _MaxLevel:32, Link:32, DataRemain/bitstring>> = DataBin,
-    io:format("Map Jump Point To Map:~p~n", [TargetMapID]),
     DataLength = Link * 8,
     <<_:DataLength/bitstring, DataRemain2/binary>> = DataRemain,
     load_mcm_jump_tile(JumpPointNum-1, DataRemain2, MapId).

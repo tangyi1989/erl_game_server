@@ -1,12 +1,12 @@
 %%-------------------------------------
-%% @Module : server_acceptor_sup
+%% @Module : gateway_acceptor_sup
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.19
 %% @Description : Acceptor 监控树
 %%-------------------------------------
 
--module(server_acceptor_sup).
+-module(gateway_acceptor_sup).
 -behaviour(supervisor).
 
 -export([start_link/0]).
@@ -23,14 +23,14 @@ init([]) ->
             {simple_one_for_one, 10, 10},
             [
                 {
-                    server_acceptor,
+                    gateway_acceptor,
                     {
-                        server_acceptor, start_link, []
+                        gateway_acceptor, start_link, []
                     },
                     transient,
                     brutal_kill,
                     worker,
-                    [server_acceptor]
+                    [gateway_acceptor]
                 }
             ]
         }

@@ -1,5 +1,5 @@
 %%-------------------------------------
-%% @Module : server_sup
+%% @Module : gateway_sup
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.19
@@ -7,7 +7,7 @@
 %%-------------------------------------
 
 
--module(server_sup).
+-module(gateway_sup).
 -behaviour(supervisor).
 
 %% export API
@@ -29,8 +29,8 @@ start_child(Mod, Args) ->
                                     {Mod, {Mod, start_link, Args}},
                                     {transient, 100, worker}, [Mod]).
 
-%% ------------------ supervisor callbacks ----------------
 
+%% ------------------ supervisor callbacks ----------------
 init([]) ->
     {
         ok, 

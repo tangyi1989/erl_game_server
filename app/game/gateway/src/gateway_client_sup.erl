@@ -1,12 +1,12 @@
 %%-------------------------------------
-%% @Module : client_sup
+%% @Module : gateway_client
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.20
 %% @Description : 客户端监控树
 %%-------------------------------------
 
--module(client_sup).
+-module(gateway_client_sup).
 -behaviour(supervisor).
 
 -export([start_link/0]).
@@ -25,14 +25,14 @@ init([]) ->
             {simple_one_for_one, 10, 10},
             [
                 {
-                    client_packet_handler, 
+                    gateway_client, 
                     {
-                        client, start_link, []
+                        gateway_client, start_link, []
                     },
                     temporary,
                     brutal_kill,
                     worker,
-                    [client_packet_handler]
+                    [gateway_client]
                 }
             ]
         }

@@ -12,7 +12,9 @@
 -compile(export_all).
 
 -define(ITEM_LIST, [gateway, map, master_host]).
--define(CONFIG_FILE_PATH, "/data/erl_game_server/setting/server.setting").
+-define(POSSIBLE_CONFIG_PATH, ["../setting", "./setting","/etc/erl_game_server",
+    "/data/erl_game_server/setting"]).
+-define(POSSIBLE_EBIN_PATH, ["\~/ebin/common/", "/data/erl_game_server/ebin"]).
 
 main(CommandList) ->
 	if 
@@ -20,9 +22,8 @@ main(CommandList) ->
 			show_help(),
 			halt(4);
 		true ->
-			{ok,RecList} = file:consult(?CONFIG_FILE_PATH),
+			{ok,RecList} = get_server_setting(?POSSIBLE_CONFIG_PATH),
 			[GatewayConfig, MapConfig, MasterHostConfig] = assert_config(RecList),
-
 			if
 				GatewayConfig =:= false ->
 					io:format("网关配置有误，请检查~n"),
@@ -52,7 +53,7 @@ make_start_command(start_manager_command, TargeNode, MasterHost, _SalveNum, Code
 	Command;
 
 make_start_command(start_gateway_command, TargeNode, MasterHost, _SalveNum, CodePath) ->
-	Cookie = get_cookie(),
+    Cookie = get_cookie(),
 	Command = lists:flatten(lists:concat(
 					["/usr/local/bin/erl -name server@", MasterHost, " ", CodePath, " -detached -setcookie ",
 					 Cookie, " -noinput -env ERL_MAX_ETS_TABLES 500000 +P 250000 +K true +h ",
@@ -69,6 +70,24 @@ make_start_command(start_logger_command, TargeNode, MasterHost, _SalveNum, CodeP
 
 get_cookie() ->
 	"123456".
+
+replace_home_path(Path) ->
+    case string:substr(Path, 1, 1) of
+        "\~" ->
+            HomePath = os:getenv("HOME"),
+            HomePath ++ string:substr(Path, 2);
+        _ ->
+            Path
+    end.
+
+get_exist_path([]) ->
+    {error, cannot_find_path};
+get_exist_path([Path | RemainPaths]) ->
+    ReplacedPath = replace_home_path(Path),
+    case filelib:is_dir(ReplacedPath) of
+        true -> {ok, ReplacedPath};
+        _ -> get_exist_path(RemainPaths)
+    end.
 
 get_ebin_dir(RootDIR) ->
     List = filelib:wildcard(RootDIR ++ "/*"),
@@ -96,11 +115,21 @@ get_ebin_dir(RootDIR) ->
       end, [RootDIR | FoldList2], FoldList2).
 
 get_code_path() ->
-	PathList = get_ebin_dir("/data/erl_game_server/ebin"),
+    {ok, EbinPath} = get_exist_path(?POSSIBLE_EBIN_PATH),
+	PathList = get_ebin_dir(EbinPath),
     lists:foldl(
       fun(P, Acc) ->
               [" -pa " ++ P | Acc]
       end, [], PathList).
+
+get_server_setting([]) ->
+    {error, cannot_find_path};
+get_server_setting([PossiblePath | RemainPaths]) ->
+    ConfigFile = PossiblePath ++ "/server.setting",
+    case filelib:is_file(ConfigFile) of
+        true -> file:consult(ConfigFile);
+        _ -> get_server_setting(RemainPaths)
+    end.
 
 get_master_host(ConfigList) ->
 	{_, MasterHost} = lists:keyfind(master_host, 1, ConfigList),

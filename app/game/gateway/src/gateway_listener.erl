@@ -1,12 +1,12 @@
 %%-------------------------------------
-%% @Module : server_listener
+%% @Module : gateway_listener
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.19
 %% @Description : TCP 监听
 %%-------------------------------------
 
--module(server_listener).
+-module(gateway_listener).
 -export([start_link/2]).
 
 -behaviour(gen_server).
@@ -29,7 +29,7 @@ init({AcceptorCount, Port}) ->
             lists:foreach(
                 fun(_) -> 
                         {ok, _APid} = supervisor:start_child(
-                                server_acceptor_sup, [LSock]
+                                gateway_acceptor_sup, [LSock]
                             ) 
                 end,
                 lists:duplicate(AcceptorCount, dumy)),

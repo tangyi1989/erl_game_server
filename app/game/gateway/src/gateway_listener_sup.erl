@@ -1,12 +1,12 @@
 %%--------------------------------------
-%% @Module : server_listener_sup
+%% @Module : gateway_listener_sup
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.19
-%% @Description : server listener 监控树
+%% @Description : gateway listener 监控树
 %%--------------------------------------
 
--module(server_listener_sup).
+-module(gateway_listener_sup).
 -behaviour(supervisor).
 
 %% export API
@@ -26,20 +26,20 @@ init({AcceptorCount, Port}) ->
         {{one_for_all, 10, 10},
             [
                 {
-                    server_acceptor_sup,
-                    {server_acceptor_sup, start_link, []},
+                    gateway_acceptor_sup,
+                    {gateway_acceptor_sup, start_link, []},
                     transient,
                     infinity,
                     supervisor,
-                    [server_acceptor_sup]
+                    [gateway_acceptor_sup]
                 },
                 {
-                    server_listener,
-                    {server_listener, start_link, [AcceptorCount, Port]},
+                    gateway_listener,
+                    {gateway_listener, start_link, [AcceptorCount, Port]},
                     transient,
                     100,
                     worker,
-                    [server_listener]
+                    [gateway_listener]
                 }
             ]
         }

@@ -7,7 +7,7 @@
 %%% Created : 2013-09-25
 %%%-------------------------------------------------------------------
 
--module(server).
+-module(gateway).
 -behaviour(application).
 -include("common.hrl").
 -include("logger.hrl").
@@ -20,28 +20,12 @@
 
 -compile(export_all).
 
--define(APPS, [sasl, lager, server]).
-
-%%-server_boot_step({server, 
-%%			[{description, "gateway node handle connect"},  %%description
-%%                   	{mfa, { server_mods, 	%%module
-%%                   	        start,		%%method
-%%                                [8888]		%%parameter
-%%                        }
-%%                    }]}).
-
-%%-server_boot_step({server,
-%%                        [{description, "notify the manager node"},  %%description
-%%                        {mfa, { global,    			    %%module
-%%                                send,          			    %%method
-%%                                []          %%parameter
-%%                        }
-%%                    }]}).
+-define(APPS, [sasl, lager, gateway]).
 
 -define(Attributes,[
 		{	"server_mods process",
 			fun()->
-				server_mods:start(8888)
+				gateway_mods:start(8888)
 			end
 		},
 		%%这里注意要先拼通管理节点啊，要不下面的global:send会报错的，调了两个多钟头
@@ -97,8 +81,7 @@ stop() ->
 %%% @end
 %%%-------------------------------------------------------------------
 start(normal, []) ->
-	{ok, SuperPid} = server_sup:start_link(),
-%%	Attributes = common_node:all_module_attributes(server, server_boot_step),
+	{ok, SuperPid} = gateway_sup:start_link(),
 	worker_behaviour(fun lists:foreach/2, ?Attributes),
 	{ok, SuperPid}.
 

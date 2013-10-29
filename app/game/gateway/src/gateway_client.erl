@@ -1,12 +1,12 @@
 %%-------------------------------------
-%% @Module : client
+%% @Module : gateway_client
 %% @Author : TangYi
 %% @Email : tang_yi_1989@qq.com
 %% @Created : 2013.09.20
 %% @Description : 接收和发送客户端封包
 %%-------------------------------------
 
--module(client).
+-module(gateway_client).
 
 -export([start_link/0]).
 
